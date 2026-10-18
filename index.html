@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Помощник Матрёшки</title>
+    <!-- Подключаем библиотеку Telegram -->
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        /* Настраиваем цвета под темную/светлую тему пользователя */
+        body {
+            font-family: sans-serif;
+            background-color: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 20px;
+            margin: 0;
+            text-align: center;
+        }
+        .header {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            font-size: 15px;
+            color: var(--tg-theme-hint-color, #999999);
+            margin-bottom: 25px;
+            line-height: 1.4;
+        }
+        .question {
+            font-size: 17px;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+        .buttons-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px; /* Расстояние между кнопками */
+        }
+        button {
+            padding: 16px;
+            background-color: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #ffffff);
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+        button:active {
+            opacity: 0.8; /* Эффект нажатия */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">👋 Здравствуйте! Я помощник «Матрёшки».</div>
+    <div class="subtitle">Помогу быстро найти подходящий вариант для вашего ребёнка.</div>
+    
+    <div class="question">Что вас интересует?</div>
+
+    <div class="buttons-container">
+        <!-- При нажатии на кнопку вызывается функция sendDataToBot с нужным текстом -->
+        <button onclick="sendDataToBot('🧸 Детский сад')">🧸 Детский сад</button>
+        <button onclick="sendDataToBot('🌱 Занятия для детей')">🌱 Занятия для детей</button>
+        <button onclick="sendDataToBot('🧠 Логопед / нейропсихолог')">🧠 Логопед / нейропсихолог</button>
+        <button onclick="sendDataToBot('🎈 Праздники и мероприятия')">🎈 Праздники и мероприятия</button>
+        <button onclick="sendDataToBot('💪 Для взрослых')">💪 Для взрослых</button>
+    </div>
+
+    <script>
+        // Сообщаем Telegram, что приложение готово
+        Telegram.WebApp.ready();
+        // Растягиваем окно приложения на максимальную высоту
+        Telegram.WebApp.expand();
+
+        // Функция, которая передает данные обратно в Python-бот
+        function sendDataToBot(selectedOption) {
+            // Эта команда отправляет текст боту и автоматически закрывает Mini App
+            Telegram.WebApp.sendData(selectedOption);
+        }
+    </script>
+</body>
+</html>

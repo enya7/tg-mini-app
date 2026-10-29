@@ -400,19 +400,26 @@ button {
   min-height: 48px;
   border: 0;
   border-radius: 12px;
-  color: #080d0b;
   background: transparent;
   cursor: pointer;
+  /* цвет неактивной иконки */
+  color: var(--dark-green); 
+  transition: color 0.2s ease, transform 0.15s ease;
 }
 
 .nav-icon {
-  font-size: 40px;
-  line-height: 1;
-  font-weight: bold;
+  display: block;
+  width: 40px;
+  height: 40px;
+  background-color: currentColor;
+
+  -webkit-mask: var(--icon) center / contain no-repeat;
+  mask: var(--icon) center / contain no-repeat;
 }
 
+/* цвет активной иконки */
 .nav-item.active {
-  color: #080d0b;
+  color: var(--paper);
 }
 
 .nav-item:active {

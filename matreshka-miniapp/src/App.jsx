@@ -172,7 +172,10 @@ function MainScreen() {
               activeSection === section.id ? "page" : undefined
             }
           >
-            <img className="nav-icon" src={section.icon} alt="" />
+            <span
+              className="nav-icon"
+              style={{ "--icon": `url("${section.icon}")` }}
+            />
           </button>
         ))}
       </nav>

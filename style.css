@@ -1,12 +1,38 @@
+.header {
+    display: flex;
+    flex-direction: column;   
+    align-items: center;     
+    justify-content: center;  
+    text-align: center;
+    height: 56px;
+    margin-top: 10px;
+    padding: 0 12px;
+    background-color: #fef4e8;
+    color: #000000;
+    font-family: 'TT Rounds Neue Trl Cmd', Inter, sans-serif;
+    font-size: 15px;
+}
+
+
 body { 
     margin: 0; 
-    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
+    font-family: 'TT Rounds Neue Trl Cmd', Inter, sans-serif;
     display: flex; 
     flex-direction: column; 
     height: 100vh; 
     overflow: hidden; 
-    background-color: #ffffff;
-    color: #333333;
+    background-color: #fef4e8;
+    color: #000000;
+}
+
+body .h1 {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    margin-top: 50px;
+    font-family: 'TT Rounds Neue Trl Cmd', Inter, serif;
+    font-size: 42px;
+    color: #000000; 
 }
 
 .content { 
@@ -25,7 +51,7 @@ body {
     width: 100%; 
     display: flex; 
     justify-content: space-around; 
-    background: #ffffff; 
+    background: #fef4e8; 
     border-top: 1px solid #eeeeee; 
     padding: 10px 0;
     padding-bottom: env(safe-area-inset-bottom, 10px); 

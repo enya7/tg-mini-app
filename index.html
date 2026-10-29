@@ -1,55 +1,13 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Матрёшка</title>
-    <header class='header'>
-        <div class="top-title">
-            <div class="title">Детский центр Матрёшка</div>
-            <div class="subtitle">мини-приложение</div>
-        </div>
-    </header>
-    <!-- Подключаем файл со стилями -->
-    <link rel="stylesheet" href="style.css">
-    <!-- Скрипт Telegram Web App (понадобится для связи с ботом) -->
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-</head>
-<body>
-
-    <div class="content">
-        <div id="home" class="screen active">
-            <h1>Информация</h1>
-            <p>Информация о детском центре «Матрёшка».</p>
-            <div class="spacer">Листайте вниз... ↓</div>
-            <div class="events-block">
-                <h2>Мероприятия</h2>
-                <p>Ближайшие праздники и утренники.</p>
-            </div>
-        </div>
-
-        <div id="kindergarten" class="screen">
-            <h1>Детский сад</h1>
-            <p style="color: #666; margin-bottom: 20px;">Выберите удобный формат 👇</p>
-            <div class="format-card" onclick="sendDataToBot('Полный день')">Полный день (8:00–19:00)</div>
-            <div class="format-card" onclick="sendDataToBot('ГКП')">Группа кратковременного пребывания</div>
-            <div class="format-card" onclick="sendDataToBot('Выходной день')">Сад выходного дня</div>
-            <div class="format-card" onclick="sendDataToBot('Няня')">Няня на час</div>
-        </div>
-    </div>
-
-    <div class="tab-bar">
-        <button class="tab-btn active" onclick="switchTab('home', event)">
-            <span class="icon">🏠</span> 
-            <span>Главное</span>
-        </button>
-        <button class="tab-btn" onclick="switchTab('kindergarten', event)">
-            <span class="icon">🐴</span> 
-            <span>Детский сад</span>
-        </button>
-    </div>
-
-    <!-- Подключаем файл с логикой -->
-    <script src="script.js"></script>
-</body>
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>matreshka-miniapp</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
 </html>

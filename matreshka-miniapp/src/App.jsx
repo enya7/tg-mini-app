@@ -3,15 +3,19 @@ import flowerRight from "./assets/flower_right.svg";
 import logo from "./assets/matreshka_doll.svg";
 import cherry from "./assets/cherry.svg";
 import bear from "./assets/teddy-bear.svg";
+import scheduleIcon from "./assets/Book.svg";
+import homeIcon from "./assets/home.svg";
+import docIcon from "./assets/Л.svg";
+import gardenIcon from "./assets/Carousel.svg";
 
 import React, { useEffect, useState } from "react";
 import "./App.css";
 
 const sections = [
-  { id: "home", icon: "⌂", label: "Главная" },
-  { id: "schedule", icon: "♧", label: "Расписание" },
-  { id: "books", icon: "▤", label: "Материалы" },
-  { id: "activities", icon: "♧", label: "Занятия" },
+  { id: "home", icon: homeIcon, label: "Главная" },
+  { id: "kindergarten", icon: gardenIcon, label: "Детский сад" },
+  { id: "schedule", icon: scheduleIcon, label: "Расписание" },
+  { id: "doctors", icon: docIcon, label: "Логопед/Нейропсихолог" },
 ];
 
 function TelegramHeader() {
@@ -160,9 +164,7 @@ function MainScreen() {
           <button
             key={section.id}
             className={
-              activeSection === section.id
-                ? "nav-item active"
-                : "nav-item"
+              activeSection === section.id ? "nav-item active" : "nav-item"
             }
             onClick={() => setActiveSection(section.id)}
             aria-label={section.label}
@@ -170,7 +172,7 @@ function MainScreen() {
               activeSection === section.id ? "page" : undefined
             }
           >
-            <span className="nav-icon">{section.icon}</span>
+            <img className="nav-icon" src={section.icon} alt="" />
           </button>
         ))}
       </nav>

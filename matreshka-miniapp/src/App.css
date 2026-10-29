@@ -538,7 +538,7 @@ button,
   font-weight: 700;
   letter-spacing: 2px;
   margin: 0;
-  color: #111;
+  color: var(--dark-green);
   text-align: start;
 }
 

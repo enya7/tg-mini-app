@@ -1,0 +1,577 @@
+
+@font-face {
+  font-family: "TT Rounds Neue";
+  src: url("./fonts/TT-Rounds-Neue-Compressed.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: "TT Rounds Neue Condensed";
+  src: url("./fonts/TT-Rounds-Neue-Condensed.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
+:root {
+  font-family: "TT Rounds Neue Condensed", sans-serif;
+  color: #183f43;
+  background: #444444;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+
+  --dark-green: #19464b;
+  --sage: #91ae94;
+  --pale-green: #dce7dd;
+  --peach: #f0c8b8;
+  --paper: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  min-width: 320px;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  overflow: hidden;
+}
+
+button,
+a {
+  font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.app-wrapper {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.screen-container {
+  position: relative;
+  width: 100%;
+  max-width: 430px;
+  height: 100%;
+  overflow: hidden;
+  background: var(--paper);
+}
+
+.splash-screen,
+.welcome-screen,
+.main-screen {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--paper);
+  animation: screen-appear 0.65s ease both;
+}
+
+@keyframes screen-appear {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Верхняя панель Telegram */
+
+.telegram-header {
+  position: relative;
+  z-index: 2;
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr) 42px;
+  align-items: center;
+  flex-shrink: 0;
+  min-height: 72px;
+  padding: 8px 12px;
+  color: #111111;
+  background: white;
+}
+
+.close-button,
+.more-button {
+  border: 0;
+  background: transparent;
+  color: #111111;
+  cursor: pointer;
+}
+
+.close-button {
+  padding: 8px 0;
+  text-align: left;
+  font-size: 10px;
+}
+
+.telegram-title {
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.7;
+}
+
+.telegram-title span {
+  display: block;
+}
+
+.more-button {
+  justify-self: end;
+  width: 31px;
+  height: 31px;
+  border-radius: 50%;
+  background: #e7e7e7;
+  font-size: 13px;
+  letter-spacing: 1px;
+}
+
+/* Первый экран */
+
+.splash-content {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 12px 65px;
+  text-align: center;
+}
+
+.logo-picture {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 245px;
+  height: 225px;
+  margin-bottom: 10px;
+  color: var(--dark-green);
+}
+
+.doll {
+  position: relative;
+  width: 132px;
+  height: 190px;
+}
+
+.doll-face {
+  position: absolute;
+  top: 8px;
+  left: 22px;
+  z-index: 1;
+  width: 88px;
+  height: 94px;
+  border: 4px solid var(--dark-green);
+  border-radius: 48% 48% 45% 45%;
+  background: #fff;
+}
+
+.doll-hair {
+  position: absolute;
+  top: -3px;
+  left: 8px;
+  width: 64px;
+  height: 42px;
+  border-bottom: 4px solid var(--dark-green);
+  border-radius: 50% 50% 35% 35%;
+}
+
+.doll-eyes {
+  position: absolute;
+  top: 46px;
+  left: 13px;
+  width: 58px;
+  font-size: 18px;
+  font-weight: bold;
+}
+
+.doll-smile {
+  position: absolute;
+  top: 55px;
+  left: 33px;
+  font-size: 22px;
+}
+
+.doll-body {
+  position: absolute;
+  top: 88px;
+  left: 0;
+  width: 132px;
+  height: 94px;
+  border: 4px solid var(--dark-green);
+  border-radius: 48% 48% 40% 40%;
+  background: white;
+}
+
+.child {
+  position: absolute;
+  top: -12px;
+  right: -8px;
+  width: 53px;
+  height: 58px;
+  border: 3px solid var(--dark-green);
+  border-radius: 50%;
+  background: white;
+}
+
+.child-face {
+  padding-top: 19px;
+  text-align: center;
+  font-size: 20px;
+}
+
+.doll-cherries {
+  position: absolute;
+  bottom: 1px;
+  left: 37px;
+  color: var(--dark-green);
+  font-size: 28px;
+  letter-spacing: -9px;
+}
+
+.logo-flower {
+  position: absolute;
+  top: 100px;
+  color: var(--sage);
+  font-size: 43px;
+}
+
+.flower-left {
+  left: 0;
+}
+
+.flower-right {
+  right: 0;
+}
+
+.brand-caption {
+  margin: 0 0 1px;
+  font-size: 20px;
+}
+
+.brand-name {
+  margin: 0;
+  font-size: clamp(29px, 9vw, 42px);
+  font-weight: 500;
+  letter-spacing: -1.4px;
+}
+
+/* Второй экран */
+
+.welcome-screen {
+  color: #111;
+}
+
+.welcome-content {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  padding: 10px 18px 35px;
+  text-align: center;
+}
+
+.welcome-content p {
+  margin: 0;
+  font-size: clamp(19px, 5.4vw, 23px);
+  line-height: 1.55;
+  font-weight: 400;
+}
+
+.decoration {
+  position: absolute;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.cherry {
+  top: 24%;
+  left: 12%;
+  font-size: 36px;
+}
+
+.branch {
+  color: var(--sage);
+  font-size: 78px;
+}
+
+.branch-top {
+  top: 12%;
+  right: 8%;
+  transform: rotate(-30deg);
+}
+
+.teddy {
+  right: 9%;
+  bottom: 11%;
+  font-size: 53px;
+  transform: rotate(-12deg);
+}
+
+.branch-bottom {
+  bottom: 5%;
+  left: 8%;
+  transform: rotate(150deg);
+}
+
+/* Главная страница */
+
+.main-screen {
+  color: #111;
+}
+
+.content-area {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 13px 22px 20px;
+  scrollbar-width: none;
+  animation: content-appear 0.35s ease both;
+}
+
+.content-area::-webkit-scrollbar {
+  display: none;
+}
+
+@keyframes content-appear {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.page-heading h1,
+.placeholder-content h1 {
+  margin: 0 0 16px;
+  font-size: clamp(27px, 7vw, 32px);
+  font-weight: 800;
+  letter-spacing: 3px;
+}
+
+.information-card {
+  position: relative;
+  z-index: 1;
+  font-size: 16px;
+  line-height: 1.2;
+}
+
+.information-card p {
+  margin: 0 0 10px;
+}
+
+.information-card .phone {
+  margin-top: 8px;
+}
+
+.information-card a {
+  color: inherit;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.schedule-heading {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 30px;
+}
+
+.schedule-heading h2 {
+  position: relative;
+  z-index: 1;
+  margin: 0 0 12px;
+  font-size: 22px;
+  font-weight: 800;
+  letter-spacing: 2px;
+}
+
+.leaf-decoration {
+  position: absolute;
+  top: -70px;
+  right: -4px;
+  color: #a9c4ad;
+  font-size: 110px;
+  transform: rotate(-28deg);
+  opacity: 0.8;
+  pointer-events: none;
+}
+
+.schedule-card {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 210px;
+  border-radius: 29px;
+  background: #dedede;
+  box-shadow: 0 2px 3px #00000025;
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+}
+
+.schedule-card p {
+  margin: 0;
+}
+
+/* Нижняя навигация */
+
+.bottom-navigation {
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  flex-shrink: 0;
+  min-height: 58px;
+  padding: 3px 4px max(3px, env(safe-area-inset-bottom));
+  background: var(--sage);
+}
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 25%;
+  min-height: 48px;
+  border: 0;
+  border-radius: 12px;
+  color: #080d0b;
+  background: transparent;
+  cursor: pointer;
+}
+
+.nav-icon {
+  font-size: 35px;
+  line-height: 1;
+  font-weight: bold;
+}
+
+.nav-item.active {
+  color: #080d0b;
+}
+
+.nav-item:active {
+  transform: scale(0.94);
+}
+
+.placeholder-content {
+  padding-top: 15px;
+}
+
+.placeholder-content p {
+  color: #555;
+  font-size: 16px;
+  line-height: 1.5;
+}
+
+/* На широком экране сохраняем формат телефона */
+
+@media (min-width: 600px) {
+  .screen-container {
+    height: min(100%, 900px);
+    align-self: center;
+    border-radius: 8px;
+    box-shadow: 0 0 25px #00000020;
+  }
+}
+
+@media (max-height: 650px) {
+  .splash-content {
+    padding-bottom: 15px;
+  }
+
+  .logo-picture {
+    transform: scale(0.78);
+    margin-top: -15px;
+    margin-bottom: -10px;
+  }
+
+  .brand-caption {
+    font-size: 17px;
+  }
+
+  .brand-name {
+    font-size: 30px;
+  }
+
+  .schedule-card {
+    min-height: 150px;
+  }
+}
+
+
+/* Заголовки — акцидентный шрифт */
+.brand-name,
+.page-heading h1,
+.schedule-heading h2,
+.placeholder-content h1 {
+  font-family: "TT Rounds Neue", sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+}
+
+/* Текст — текстовый шрифт */
+body,
+button,
+.information-card,
+.schedule-card,
+.welcome-content,
+.telegram-header,
+.placeholder-content p {
+  font-family: "TT Rounds Neue Condensed", sans-serif;
+  font-weight: 400;
+}
+
+/* Название центра на заставке */
+.brand-caption {
+  font-family: "TT Rounds Neue Condensed", sans-serif;
+  font-size: 20px;
+}
+
+/* Адрес и телефон */
+.information-card {
+  font-size: 18px;
+  line-height: 1.2;
+}
+
+/* Приветствие */
+.welcome-content p {
+  font-size: 22px;
+  line-height: 1.5;
+}
+
+/* Заголовок расписания */
+.schedule-heading h2 {
+  font-size: 24px;
+}
+
+/* Подпись внутри блока расписания */
+.schedule-card {
+  font-size: 16px;
+}

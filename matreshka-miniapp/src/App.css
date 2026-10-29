@@ -593,13 +593,14 @@ button,
   flex: 1;
   padding: 2px 6px;
   text-align: center;
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.35;
 }
 
 .event-session + .event-session {
   border-left: 2px solid #555;
-  height: 45px;
+  min-height: 45px;
+  max-height: auto;
 }
 
 .events-contacts {

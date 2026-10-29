@@ -36,28 +36,6 @@ const events = [
   // следующее мероприятие добавляйте сюда в таком же формате
 ];
 
-function TelegramHeader() {
-  return (
-    <header className="telegram-header">
-      <button
-        className="close-button"
-        onClick={() => window.Telegram?.WebApp?.close()}
-      >
-        Закрыть
-      </button>
-
-      <div className="telegram-title">
-        Матрешка Садик Бот
-        <span>мини-приложение</span>
-      </div>
-
-      <button className="more-button" aria-label="Дополнительное меню">
-        •••
-      </button>
-    </header>
-  );
-}
-
 function MatryoshkaLogo() {
   return (
     <div className="logo-picture" aria-label="Матрёшка с ребёнком">
@@ -123,7 +101,7 @@ useEffect(() => {
     },
     { threshold: 0, rootMargin: "0px 0px 60px 0px" }
   );
-  
+
   if (ref.current) observer.observe(ref.current);
   return () => observer.disconnect();
 }, []);

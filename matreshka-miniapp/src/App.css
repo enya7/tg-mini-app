@@ -19,7 +19,7 @@
   font-family: "TT Rounds Neue Trl Cnd", sans-serif;
   color: #174046;
   background: #444444;
-  font-synthesis: none;
+  font-synthesis: weight;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 
@@ -306,11 +306,14 @@ button {
 
 .page-heading h1,
 .placeholder-content h1 {
+  display: flex;
   font-family: "TT Rounds Neue Trl Cmd", sans-serif;
   margin: 0 0 16px;
   font-size: clamp(27px, 7vw, 32px);
   font-weight: 800;
   letter-spacing: 3px;
+  justify-content: flex-start;
+  text-align: start; 
   color: var(--dark-green);
   text-align: left;
 }
@@ -318,8 +321,10 @@ button {
 .information-card {
   position: relative;
   z-index: 1;
-  font-size: 16px;
+  font-size: 23px;
   line-height: 1.2;
+  text-align: start;
+  font-size: clamp(27px, 7vw, 32px);
 }
 
 .information-card p {
@@ -355,11 +360,10 @@ button {
 
 .leaf-decoration {
   position: absolute;
-  top: -70px;
-  right: -4px;
-  color: #a9c4ad;
-  font-size: 110px;
-  transform: rotate(-28deg);
+  top: -139px;
+  right: -15px;
+  width: 139px;
+  height: 204px;
   opacity: 0.8;
   pointer-events: none;
 }
@@ -370,7 +374,7 @@ button {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 210px;
+  min-height: 250px;
   border-radius: 29px;
   background: #dedede;
   box-shadow: 0 2px 3px #00000025;
@@ -485,8 +489,8 @@ button {
 .schedule-heading h2,
 .placeholder-content h1 {
   font-family: "TT Rounds Neue Trl Cmd", sans-serif;
-  font-size: 30px;
-  font-weight: 700;
+  font-size: 42px;
+  font-weight: 600;
   margin-top: 0px;  /* Отрицательное значение двигает текст ВВЕРХ */
   margin-bottom: 20px;  /* Положительное значение двигает текст ВНИЗ */
   color: var(--dark-green);
@@ -514,7 +518,7 @@ button,
 
 /* Заголовок расписания */
 .schedule-heading h2 {
-  font-size: 24px;
+  font-size: 30px;
 }
 
 /* Подпись внутри блока расписания */
@@ -522,7 +526,119 @@ button,
   font-size: 16px;
 }
 
+/* Мероприятия */
 
+.events-section {
+  margin-top: 40px;
+}
+
+.events-heading {
+  font-family: "TT Rounds Neue Trl Cmd", sans-serif;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin: 0;
+  color: #111;
+  text-align: start;
+}
+
+.events-subtitle {
+  margin: 4px 0 16px;
+  font-size: 18px;
+  text-align: start;
+}
+
+.event {
+  margin-bottom: 32px;
+}
+
+.event-image {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 10;
+  object-fit: cover;
+  border-radius: 28px;
+}
+
+.event-info {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 40px;
+  margin: 16px 8px;
+}
+
+.event-name {
+  margin: 0;
+  font-size: 26px;
+  font-weight: 400;
+}
+
+.event-date {
+  margin: 0;
+  font-size: 20px;
+  line-height: 1.1;
+  text-align: center;
+  white-space: pre-line;
+}
+
+.event-sessions {
+  display: flex;
+  padding: 10px 0;
+  border-radius: 30px;
+  background: #fcefe6;
+}
+
+.event-session {
+  flex: 1;
+  padding: 2px 6px;
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.35;
+}
+
+.event-session + .event-session {
+  border-left: 2px solid #555;
+  height: 45px;
+}
+
+.events-contacts {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 10px;
+  text-align: start;
+}
+
+.contact-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  color: inherit;
+  text-decoration: none;
+  font-size: 18px;
+  line-height: 1.2;
+  text-align: start;
+}
+
+.contact-row img {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+}
+
+/* Анимация появления при прокрутке */
+
+.reveal {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.6s ease, transform 0.6s ease;
+}
+
+.reveal.visible {
+  opacity: 1;
+  transform: translateY(0);
+}
 /* Детский сад */
 
 .kg-page {

@@ -7,8 +7,12 @@ import scheduleIcon from "./assets/Book.svg";
 import homeIcon from "./assets/home.svg";
 import docIcon from "./assets/Л.svg";
 import gardenIcon from "./assets/Carousel.svg";
+import mainFlower from "./assets/Main_flower.svg"; 
+import halloweenImg from "./assets/Halloween.svg";
+import phoneIcon from "./assets/Phone.svg";
+import mapPoint from "./assets/Map_point.svg"; 
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
 
 const sections = [
@@ -16,6 +20,20 @@ const sections = [
   { id: "kindergarten", icon: gardenIcon, label: "Детский сад" },
   { id: "classes", icon: scheduleIcon, label: "Занятия" },
   { id: "doctors", icon: docIcon, label: "Логопед" },
+];
+
+const events = [
+  {
+    id: "halloween-2026",
+    image: halloweenImg,
+    title: "Хеллоуин",
+    date: "31 октября\n2026 года",
+    sessions: [
+      { time: "10:00", ages: "3-5 лет" },
+      { time: "11:00", ages: "5-12 лет" },
+    ],
+  },
+  // следующее мероприятие добавляйте сюда в таком же формате
 ];
 
 function TelegramHeader() {
@@ -93,6 +111,86 @@ function WelcomeScreen() {
   );
 }
 
+function Reveal({ children }) {
+  const ref = useRef(null);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setVisible(true);
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.15 }
+    );
+
+    if (ref.current) observer.observe(ref.current);
+    return () => observer.disconnect();
+  }, []);
+
+  return (
+    <div ref={ref} className={visible ? "reveal visible" : "reveal"}>
+      {children}
+    </div>
+  );
+}
+
+function EventCard({ event }) {
+  return (
+    <article className="event">
+      <img className="event-image" src={event.image} alt={event.title} />
+
+      <div className="event-info">
+        <h3 className="event-name">{event.title}</h3>
+        <p className="event-date">{event.date}</p>
+      </div>
+
+      <div className="event-sessions">
+        {event.sessions.map((s) => (
+          <div className="event-session" key={s.time}>
+            Начало в {s.time}
+            <br />
+            для детей {s.ages}
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function EventsSection() {
+  return (
+    <section className="events-section">
+      <h2 className="events-heading">Мероприятия</h2>
+      <p className="events-subtitle">Ближайшие мероприятия</p>
+
+      {events.map((event) => (
+        <Reveal key={event.id}>
+          <EventCard event={event} />
+        </Reveal>
+      ))}
+
+      <Reveal>
+        <div className="events-contacts">
+          <a className="contact-row" href="tel:+79936181618">
+            <img src={phoneIcon} alt="" />
+            <span>8 (993) 618-16-18</span>
+          </a>
+          <div className="contact-row">
+            <img src={mapPoint} alt="" />
+            <span>
+              Одинцово, ЖК “Одинцово-1”, ул.&nbsp;Рябиновая, д.5, к.1,
+              подъезд 3, офис 138
+            </span>
+          </div>
+        </div>
+      </Reveal>
+    </section>
+  );
+}
+
 function HomeContent() {
   return (
     <>
@@ -119,12 +217,14 @@ function HomeContent() {
 
       <div className="schedule-heading">
         <h2>Расписание</h2>
-        <span className="leaf-decoration">♧</span>
+        <img className="leaf-decoration" src={mainFlower} alt=''></img>
       </div>
 
       <div className="schedule-card">
         <p>Вашего расписания пока нет</p>
       </div>
+
+      <EventsSection />
     </>
   );
 }

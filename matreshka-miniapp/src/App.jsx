@@ -14,8 +14,8 @@ import "./App.css";
 const sections = [
   { id: "home", icon: homeIcon, label: "Главная" },
   { id: "kindergarten", icon: gardenIcon, label: "Детский сад" },
-  { id: "schedule", icon: scheduleIcon, label: "Расписание" },
-  { id: "doctors", icon: docIcon, label: "Логопед/Нейропсихолог" },
+  { id: "classes", icon: scheduleIcon, label: "Занятия" },
+  { id: "doctors", icon: docIcon, label: "Логопед" },
 ];
 
 function TelegramHeader() {
@@ -129,11 +129,155 @@ function HomeContent() {
   );
 }
 
+const formats = [
+  {
+    id: "full",
+    cardLines: ["Полный день", "8:00-19:00"],
+    title: "Полный день 8:00-19:00",
+    lead: "Детский сад полного дня · 2+",
+    list: [
+      "8:00–19:00",
+      "4-разовое питание",
+      "Небольшая группа",
+      "Развивающие занятия в течение дня",
+      "Дневной сон и прогулки",
+      "ЖК Одинцово-1",
+    ],
+    price: "33 000 ₽/мес. + питание 400 ₽/день",
+    cta: "Записаться на экскурсию",
+  },
+  {
+    id: "short",
+    cardLines: ["Группа кратковременного", "пребывания", "8:00-12:00"],
+    title: "Группа кратковременного пребывания 8:00-12:00",
+    lead: "Группа кратковременного пребывания · 2+",
+    list: [
+      "8:00–12:00",
+      "Мягкая адаптация к саду",
+      "Игры и занятия",
+      "Питание по желанию",
+      "Небольшая группа",
+    ],
+    price: "23 000 ₽/мес.",
+    cta: "Записаться на экскурсию",
+  },
+  {
+    id: "weekend",
+    cardLines: ["Сад", "выходного дня"],
+    title: "Сад выходного дня",
+    lead: "Сад выходного дня · 2+",
+    list: [
+      "Суббота",
+      "10:00 - 14:00",
+      "Игры, занятия и присмотр",
+      "На территории «Матрёшки»",
+    ],
+    note: "Посещение по предварительной записи",
+    cta: "Записаться на экскурсию",
+  },
+  {
+    id: "nanny",
+    cardLines: ["Няня на час"],
+    title: "Няня на час",
+    list: [
+      "Персональный присмотр за ребёнком на территории центра",
+      "Подходит, когда родителям нужно освободить несколько часов",
+    ],
+    paragraph:
+      "Укажите удобные дату и время – администратор подтвердит возможность записи",
+    cta: "Забронировать время",
+  },
+];
+
+function KindergartenContent() {
+  const [formatId, setFormatId] = useState(null);
+  const format = formats.find((f) => f.id === formatId);
+
+  // замените ссылку на вашего бота / администратора
+  const openChat = () =>
+    window.Telegram?.WebApp?.openTelegramLink("https://t.me/kiraen07");
+
+  // Экран 1: выбор карточки
+  if (!format) {
+    return (
+      <div className="kg-page">
+        <div className="page-heading">
+          <h1>Детский сад</h1>
+        </div>
+        <p className="kg-subtitle">Выберите удобный формат:</p>
+
+        <div className="kg-grid">
+          {formats.map((f) => (
+            <button
+              key={f.id}
+              className="kg-card"
+              onClick={() => setFormatId(f.id)}
+            >
+              {f.cardLines.map((line) => (
+                <span key={line}>{line}</span>
+              ))}
+              {f.id === "short" && (
+                <img className="kg-card-flower" src={flowerRight} alt="" />
+              )}
+              {f.id === "weekend" && (
+                <img className="kg-card-cherry" src={cherry} alt="" />
+              )}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Экраны 2–5: подробности формата
+  return (
+    <div className="kg-page kg-detail">
+      <button
+        className="kg-back"
+        onClick={() => setFormatId(null)}
+        aria-label="Назад"
+      >
+        <svg viewBox="0 0 24 24" width="34" height="34" fill="none"
+             stroke="currentColor" strokeWidth="2" strokeLinecap="round"
+             strokeLinejoin="round">
+          <path d="M9 14L4 9l5-5" />
+          <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
+        </svg>
+      </button>
+
+      <div className="page-heading">
+        <h1>Выбор формата</h1>
+      </div>
+      <h2 className="kg-format-title">{format.title}</h2>
+
+      {format.lead && <p className="kg-lead">{format.lead}</p>}
+
+      <ul className="kg-list">
+        {format.list.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+
+      {format.paragraph && <p className="kg-paragraph">{format.paragraph}</p>}
+      {format.note && <p className="kg-note">{format.note}</p>}
+      {format.price && <p className="kg-price">{format.price}</p>}
+
+      <div className="kg-actions">
+        <button className="kg-btn kg-btn-primary" onClick={openChat}>
+          {format.cta}
+        </button>
+        <button className="kg-btn kg-btn-secondary" onClick={openChat}>
+          Задать вопрос
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function PlaceholderContent({ section }) {
   const titles = {
     schedule: "Расписание",
-    books: "Материалы",
-    activities: "Занятия",
+    classes: "Занятия",
   };
 
   return (
@@ -152,9 +296,9 @@ function MainScreen() {
       <TelegramHeader />
 
       <main className="content-area" key={activeSection}>
-        {activeSection === "home" ? (
-          <HomeContent />
-        ) : (
+        {activeSection === "home" && <HomeContent />}
+        {activeSection === "kindergarten" && <KindergartenContent />}
+        {activeSection !== "home" && activeSection !== "kindergarten" && (
           <PlaceholderContent section={activeSection} />
         )}
       </main>

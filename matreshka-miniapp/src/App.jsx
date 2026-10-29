@@ -129,6 +129,8 @@ function HomeContent() {
   );
 }
 
+/* Детский сад: выбор формата и подробности */
+
 const formats = [
   {
     id: "full",
@@ -274,9 +276,133 @@ function KindergartenContent() {
   );
 }
 
+/* Занятия */
+
+const ageGroups = [
+  { id: "1-2", label: "1-2 года", items: [] },
+  { id: "2-4", label: "2–4 года", items: [] },
+  {
+    id: "4-5",
+    label: "4–5 лет",
+    items: [
+      {
+        id: "chess",
+        name: "Шахматы",
+        details: [
+          "4+",
+          "Для начинающих и продолжающих",
+          "Педагог с 10-летним опытом",
+          "Логика, внимание и стратегическое мышление",
+        ],
+        price: "750 ₽ / занятие",
+      },
+      { id: "dance", name: "Хореография", details: [], price: "" },
+      { id: "music", name: "Музыка", details: [], price: "" },
+      { id: "sand", name: "Песочная анимация", details: [], price: "" },
+      { id: "science", name: "Научная лаборатория", details: [], price: "" },
+    ],
+  },
+  { id: "5-6", label: "5–6 лет", items: [] },
+  { id: "6+", label: "6+", items: [] },
+];
+
+function ClassesContent() {
+  const [ageId, setAgeId] = useState("1-2");
+  const [activityId, setActivityId] = useState(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const age = ageGroups.find((a) => a.id === ageId);
+  // выбранное занятие; если не выбрано, то первое в списке
+  const chosen = age.items.find((i) => i.id === activityId) || age.items[0];
+
+  // замените ссылку на вашего бота / администратора
+  const openChat = () =>
+    window.Telegram?.WebApp?.openTelegramLink("https://t.me/kiraen07");
+
+  return (
+    <div className="cl-page">
+      <div className="page-heading">
+        <h1>Занятия для детей</h1>
+      </div>
+      <p className="cl-subtitle">Выберите удобный формат:</p>
+
+      <div className="cl-tabs">
+        {ageGroups.map((a) => (
+          <button
+            key={a.id}
+            className={a.id === ageId ? "cl-tab active" : "cl-tab"}
+            onClick={() => {
+              setAgeId(a.id);
+              setActivityId(null);
+            }}
+          >
+            {a.label}
+          </button>
+        ))}
+      </div>
+
+      {age.items.length === 0 ? (
+        <p className="cl-empty">Занятия для этого возраста скоро появятся.</p>
+      ) : (
+        <ul className="cl-list">
+          {age.items.map((item) => (
+            <li key={item.id}>
+              <button
+                className="cl-item"
+                onClick={() => {
+                  setActivityId(item.id);
+                  setModalOpen(true);
+                }}
+              >
+                <span
+                  className={
+                    chosen && chosen.id === item.id ? "cl-dot on" : "cl-dot"
+                  }
+                />
+                {item.name}
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      {modalOpen && chosen && (
+        <div className="cl-overlay" onClick={() => setModalOpen(false)}>
+          <div className="cl-modal" onClick={(e) => e.stopPropagation()}>
+            <h3>{chosen.name}</h3>
+
+            {chosen.details.length > 0 ? (
+              <ul className="cl-details">
+                {chosen.details.map((d) => (
+                  <li key={d}>{d}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="cl-details-empty">
+                Подробности уточняйте у администратора.
+              </p>
+            )}
+
+            {chosen.price && <p className="cl-price">{chosen.price}</p>}
+
+            <button className="kg-btn kg-btn-primary" onClick={openChat}>
+              Записаться
+            </button>
+            <button className="kg-btn kg-btn-secondary" onClick={openChat}>
+              Задать вопрос
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
+/* Заглушка для разделов, которые пока не реализованы */
+
 function PlaceholderContent({ section }) {
   const titles = {
-    schedule: "Расписание",
     classes: "Занятия",
   };
 
@@ -288,6 +414,8 @@ function PlaceholderContent({ section }) {
   );
 }
 
+/* Главный экран с навигацией по разделам */
+
 function MainScreen() {
   const [activeSection, setActiveSection] = useState("home");
 
@@ -298,7 +426,8 @@ function MainScreen() {
       <main className="content-area" key={activeSection}>
         {activeSection === "home" && <HomeContent />}
         {activeSection === "kindergarten" && <KindergartenContent />}
-        {activeSection !== "home" && activeSection !== "kindergarten" && (
+        {activeSection === "classes" && <ClassesContent />}
+        {!["home", "kindergarten", "classes"].includes(activeSection) && (
           <PlaceholderContent section={activeSection} />
         )}
       </main>

@@ -19,7 +19,7 @@
   font-family: "TT Rounds Neue Trl Cnd", sans-serif;
   color: #174046;
   background: #444444;
-  font-synthesis: none;
+  font-synthesis: weight;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 
@@ -306,17 +306,22 @@ button {
 
 .page-heading h1,
 .placeholder-content h1 {
+  display: flex;
   margin: 0 0 16px;
   font-size: clamp(27px, 7vw, 32px);
   font-weight: 800;
   letter-spacing: 3px;
+  justify-content: flex-start;
+  text-align: start; 
 }
 
 .information-card {
   position: relative;
   z-index: 1;
-  font-size: 16px;
+  font-size: 23px;
   line-height: 1.2;
+  text-align: start;
+  font-size: clamp(27px, 7vw, 32px);
 }
 
 .information-card p {
@@ -475,10 +480,10 @@ button {
 .schedule-heading h2,
 .placeholder-content h1 {
   font-family: "TT Rounds Neue Trl Cmd", sans-serif;
-  font-size: 30px;
+  font-size: 42px;
   font-weight: 700;
   margin-top: 0px;  /* Отрицательное значение двигает текст ВВЕРХ */
-  margin-bottom: 20px;  /* Положительное значение двигает текст ВНИЗ */
+  margin-bottom: 30px;  /* Положительное значение двигает текст ВНИЗ */
 }
 
 /* Текст — текстовый шрифт */
@@ -502,7 +507,7 @@ button,
 
 /* Заголовок расписания */
 .schedule-heading h2 {
-  font-size: 24px;
+  font-size: 30px;
 }
 
 /* Подпись внутри блока расписания */

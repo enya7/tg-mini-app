@@ -1,3 +1,6 @@
+import flowerLeft from "./assets/flower_left.svg";
+import flowerRight from "./assets/flower_right.svg";
+import logo from "./assets/matreshka_doll.svg";
 
 import React, { useEffect, useState } from "react";
 import "./App.css";
@@ -34,21 +37,9 @@ function TelegramHeader() {
 function MatryoshkaLogo() {
   return (
     <div className="logo-picture" aria-label="Матрёшка с ребёнком">
-      <div className="logo-flower flower-left">✿</div>
-      <div className="doll">
-        <div className="doll-face">
-          <div className="doll-hair" />
-          <div className="doll-eyes">•　•</div>
-          <div className="doll-smile">⌣</div>
-        </div>
-        <div className="doll-body">
-          <div className="child">
-            <div className="child-face">⌣</div>
-          </div>
-          <div className="doll-cherries">●●</div>
-        </div>
-      </div>
-      <div className="logo-flower flower-right">✿</div>
+      <img className="logo-flower flower-left" src={flowerLeft} alt="Левый цветок" />
+      <img className="logo-doll doll-shape" src={logo} alt="Матрёшка" />
+      <img className="logo-flower flower-right" src={flowerRight} alt="Правый цветок" />
     </div>
   );
 }

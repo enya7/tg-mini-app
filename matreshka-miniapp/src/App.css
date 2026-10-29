@@ -1,32 +1,33 @@
 
 @font-face {
-  font-family: "TT Rounds Neue";
-  src: url("./fonts/TT-Rounds-Neue-Compressed.woff2") format("woff2");
+  font-family: "TT Rounds Neue Trl Cmd";
+  src: url("./fonts/TT Rounds Neue Trial Compressed Medium_0.ttf") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 @font-face {
-  font-family: "TT Rounds Neue Condensed";
-  src: url("./fonts/TT-Rounds-Neue-Condensed.woff2") format("woff2");
+  font-family: "TT Rounds Neue Trl Cnd";
+  src: url("./fonts/TT Rounds Neue Trial Condensed Medium_0.ttf") format("woff2");
   font-weight: 100 900;
   font-style: normal;
   font-display: swap;
 }
 
 :root {
-  font-family: "TT Rounds Neue Condensed", sans-serif;
-  color: #183f43;
+  font-family: "TT Rounds Neue Trl Cnd", sans-serif;
+  color: #174046;
   background: #444444;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
 
-  --dark-green: #19464b;
-  --sage: #91ae94;
-  --pale-green: #dce7dd;
-  --peach: #f0c8b8;
+  --dark-green: #174046;
+  --sage: #8EAC92;
+  --pale-green: #8EAC92;
+  --peach: #E67052;
+  --light_brown: #C2673B;
   --paper: #ffffff;
 }
 
@@ -266,8 +267,8 @@ button {
 }
 
 .brand-caption {
-  margin: 0 0 1px;
-  font-size: 20px;
+  margin: 100px 0 1px; 
+  font-size: 100px;
 }
 
 .brand-name {
@@ -531,9 +532,11 @@ button {
 .page-heading h1,
 .schedule-heading h2,
 .placeholder-content h1 {
-  font-family: "TT Rounds Neue", sans-serif;
+  font-family: "TT Rounds Neue Trl Cmd", sans-serif;
   font-size: 30px;
   font-weight: 700;
+  margin-top: 0px;  /* Отрицательное значение двигает текст ВВЕРХ */
+  margin-bottom: 20px;  /* Положительное значение двигает текст ВНИЗ */
 }
 
 /* Текст — текстовый шрифт */
@@ -544,13 +547,13 @@ button,
 .welcome-content,
 .telegram-header,
 .placeholder-content p {
-  font-family: "TT Rounds Neue Condensed", sans-serif;
+  font-family: "TT Rounds Neue Trl Cnd", sans-serif;
   font-weight: 400;
 }
 
 /* Название центра на заставке */
 .brand-caption {
-  font-family: "TT Rounds Neue Condensed", sans-serif;
+  font-family: "TT Rounds Neue Trl Cnd", sans-serif;
   font-size: 20px;
 }
 
@@ -575,3 +578,28 @@ button,
 .schedule-card {
   font-size: 16px;
 }
+
+.logo-flower {
+  position: absolute;
+  top: 100px;
+  width: 120px;
+  height: 200px;
+  object-fit: contain;
+}
+
+.flower-left {
+  left: -70px;
+}
+
+.flower-right {
+  right: -70px;
+}
+
+.logo-doll {
+  position: absolute;
+  top: -10px;
+  width: 200px;
+  height: 300px;
+  object-fit: contain;
+}
+

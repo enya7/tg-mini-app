@@ -1,6 +1,8 @@
 import flowerLeft from "./assets/flower_left.svg";
 import flowerRight from "./assets/flower_right.svg";
 import logo from "./assets/matreshka_doll.svg";
+import cherry from "./assets/cherry.svg";
+import bear from "./assets/teddy-bear.svg";
 
 import React, { useEffect, useState } from "react";
 import "./App.css";
@@ -64,8 +66,8 @@ function WelcomeScreen() {
     <section className="welcome-screen">
       <TelegramHeader />
 
-      <span className="decoration cherry">🍒</span>
-      <span className="decoration branch branch-top">❧</span>
+      <img className="deco deco-cherry" src={cherry} alt="Вишня" />
+      <img className="deco deco-branch-top" src={flowerLeft} alt="Левый цветок" />
 
       <div className="welcome-content">
         <p>
@@ -81,8 +83,8 @@ function WelcomeScreen() {
         </p>
       </div>
 
-      <span className="decoration teddy">🧸</span>
-      <span className="decoration branch branch-bottom">❧</span>
+      <img className="deco deco-bear" src={bear} alt="Мишка" />
+      <img className="deco deco-branch-bottom" src={flowerRight} alt="Правый цветок" />
     </section>
   );
 }

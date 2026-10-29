@@ -498,6 +498,117 @@ function ClassesContent() {
   );
 }
 
+/* Специалисты */
+
+const specialists = [
+  {
+    id: "speech",
+    button: "Логопед",
+    title: "Логопед",
+    intro: "Помогаем, если ребёнок:",
+    bullets: [
+      "плохо говорит или говорит мало;",
+      "не произносит отдельные звуки;",
+      "испытывает сложности с речью.",
+    ],
+    outro: "Можно начать с консультации специалиста.",
+    actions: [
+      { label: "Записаться", kind: "primary" },
+      { label: "Задать вопрос", kind: "secondary" },
+    ],
+  },
+  {
+    id: "neuro",
+    button: "Нейропсихолог",
+    title: "Нейропсихолог",
+    intro: "Помогаем, если ребёнок:",
+    bullets: ["впишите сюда пункт"], // заполните текстом
+    outro: "",
+    actions: [
+      { label: "Записаться", kind: "primary" },
+      { label: "Задать вопрос", kind: "secondary" },
+    ],
+  },
+  {
+    id: "unknown",
+    button: "Не знаю, помогите выбрать",
+    title: "Не знаю, кого выбрать",
+    intro: "Напишите в двух словах, что вас беспокоит.",
+    bullets: [],
+    outro:
+      "Администратор подскажет, к какому специалисту лучше обратиться.",
+    actions: [{ label: "Написать администратору", kind: "primary" }],
+  },
+];
+
+function SpecialistsContent() {
+  const [openId, setOpenId] = useState(null);
+  const spec = specialists.find((s) => s.id === openId);
+
+  // замените ссылку на вашего бота / администратора
+  const openChat = () =>
+    window.Telegram?.WebApp?.openTelegramLink("https://t.me/kiraen07");
+
+  return (
+    <div className="lg-page">
+      <div className="page-heading">
+        <h1>Логопед/нейропсихолог</h1>
+      </div>
+      <p className="lg-subtitle">Выберите удобный формат:</p>
+
+      <div className="lg-choices">
+        {specialists.map((s) => (
+          <button
+            key={s.id}
+            className="lg-choice"
+            onClick={() => setOpenId(s.id)}
+          >
+            {s.button}
+          </button>
+        ))}
+      </div>
+
+      {spec && (
+        <div className="cl-overlay" onClick={() => setOpenId(null)}>
+          <div
+            className="cl-modal lg-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3>{spec.title}</h3>
+
+            <p className="lg-text">{spec.intro}</p>
+
+            {spec.bullets.length > 0 && (
+              <ul className="lg-bullets">
+                {spec.bullets.map((b) => (
+                  <li key={b}>{b}</li>
+                ))}
+              </ul>
+            )}
+
+            {spec.outro && <p className="lg-text">{spec.outro}</p>}
+
+            <div className="lg-modal-actions">
+              {spec.actions.map((a) => (
+                <button
+                  key={a.label}
+                  className={
+                    a.kind === "primary"
+                      ? "kg-btn kg-btn-primary"
+                      : "kg-btn kg-btn-secondary"
+                  }
+                  onClick={openChat}
+                >
+                  {a.label}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
 
 /* Заглушка для разделов, которые пока не реализованы */
 
@@ -527,7 +638,8 @@ function MainScreen() {
         {activeSection === "home" && <HomeContent />}
         {activeSection === "kindergarten" && <KindergartenContent />}
         {activeSection === "classes" && <ClassesContent />}
-        {!["home", "kindergarten", "classes"].includes(activeSection) && (
+        {activeSection === "doctors" && <SpecialistsContent />}
+        {!["home", "kindergarten", "classes", "doctors"].includes(activeSection) && (
           <PlaceholderContent section={activeSection} />
         )}
       </main>

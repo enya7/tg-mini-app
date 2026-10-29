@@ -71,7 +71,6 @@ function MatryoshkaLogo() {
 function SplashScreen() {
   return (
     <section className="splash-screen">
-      <TelegramHeader />
 
       <div className="splash-content">
         <MatryoshkaLogo />
@@ -86,7 +85,6 @@ function SplashScreen() {
 function WelcomeScreen() {
   return (
     <section className="welcome-screen">
-      <TelegramHeader />
 
       <img className="deco deco-cherry" src={cherry} alt="Вишня" />
       <img className="deco deco-branch-top" src={flowerLeft} alt="Левый цветок" />
@@ -115,20 +113,20 @@ function Reveal({ children }) {
   const ref = useRef(null);
   const [visible, setVisible] = useState(false);
 
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        if (entry.isIntersecting) {
-          setVisible(true);
-          observer.disconnect();
-        }
-      },
-      { threshold: 0.15 }
-    );
-
-    if (ref.current) observer.observe(ref.current);
-    return () => observer.disconnect();
-  }, []);
+useEffect(() => {
+  const observer = new IntersectionObserver(
+    ([entry]) => {
+      if (entry.isIntersecting) {
+        setVisible(true);
+        observer.disconnect();
+      }
+    },
+    { threshold: 0, rootMargin: "0px 0px 60px 0px" }
+  );
+  
+  if (ref.current) observer.observe(ref.current);
+  return () => observer.disconnect();
+}, []);
 
   return (
     <div ref={ref} className={visible ? "reveal visible" : "reveal"}>
@@ -632,7 +630,6 @@ function MainScreen() {
 
   return (
     <section className="main-screen">
-      <TelegramHeader />
 
       <main className="content-area" key={activeSection}>
         {activeSection === "home" && <HomeContent />}

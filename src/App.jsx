@@ -449,6 +449,9 @@ function ClassesContent() {
             const isBooked = !!booked[item.id];
             return (
               <li key={item.id} className="cl-card">
+                {isBooked && (
+                  <img className="cl-booked-icon" src={approveIcon} alt="Записан" />
+                )}
                 <button
                   className="cl-card-name"
                   onClick={() => setOpenItem(item)}
@@ -468,7 +471,6 @@ function ClassesContent() {
                   >
                     {isBooked ? "Отменить" : "Записаться"}
                   </button>
-                  <img className="cl-card-bottom" src={approveIcon} alt="Approved" />
                 </div>
               </li>
             );

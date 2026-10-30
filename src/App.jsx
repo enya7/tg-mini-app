@@ -11,6 +11,7 @@ import mainFlower from "./assets/Main_flower.svg";
 import halloweenImg from "./assets/Halloween.svg";
 import phoneIcon from "./assets/Phone.svg";
 import mapPoint from "./assets/Map_point.svg"; 
+import approveIcon from "./assets/approve.svg"; 
 
 import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
@@ -385,18 +386,22 @@ const ageGroups = [
       {
         id: "chess",
         name: "Шахматы",
+        age: "4+",
+        teacher: "ФИО педагога",
+        price: "750 ₽ / занятие",
         details: [
           "4+",
           "Для начинающих и продолжающих",
           "Педагог с 10-летним опытом",
           "Логика, внимание и стратегическое мышление",
         ],
-        price: "750 ₽ / занятие",
       },
-      { id: "dance", name: "Хореография", details: [], price: "" },
-      { id: "music", name: "Музыка", details: [], price: "" },
-      { id: "sand", name: "Песочная анимация", details: [], price: "" },
-      { id: "science", name: "Научная лаборатория", details: [], price: "" },
+      // Для остальных занятий впишите age, teacher, price и details.
+      // Пока поля пустые, на карточке стоят заглушки.
+      { id: "dance", name: "Хореография", age: "", teacher: "", price: "", details: [] },
+      { id: "music", name: "Музыка", age: "", teacher: "", price: "", details: [] },
+      { id: "sand", name: "Песочная анимация", age: "", teacher: "", price: "", details: [] },
+      { id: "science", name: "Научная лаборатория", age: "", teacher: "", price: "", details: [] },
     ],
   },
   { id: "5-6", label: "5–6 лет", items: [] },
@@ -404,17 +409,18 @@ const ageGroups = [
 ];
 
 function ClassesContent() {
-  const [ageId, setAgeId] = useState("1-2");
-  const [activityId, setActivityId] = useState(null);
-  const [modalOpen, setModalOpen] = useState(false);
+  const [ageId, setAgeId] = useState("4-5");
+  const [openItem, setOpenItem] = useState(null); // занятие, открытое в плашке
+  const [booked, setBooked] = useState({});       // { chess: true, ... }
 
   const age = ageGroups.find((a) => a.id === ageId);
-  // выбранное занятие; если не выбрано, то первое в списке
-  const chosen = age.items.find((i) => i.id === activityId) || age.items[0];
 
   // замените ссылку на вашего бота / администратора
   const openChat = () =>
     window.Telegram?.WebApp?.openTelegramLink("https://t.me/kiraen07");
+
+  const toggleBooking = (id) =>
+    setBooked((prev) => ({ ...prev, [id]: !prev[id] }));
 
   return (
     <div className="cl-page">
@@ -428,10 +434,7 @@ function ClassesContent() {
           <button
             key={a.id}
             className={a.id === ageId ? "cl-tab active" : "cl-tab"}
-            onClick={() => {
-              setAgeId(a.id);
-              setActivityId(null);
-            }}
+            onClick={() => setAgeId(a.id)}
           >
             {a.label}
           </button>
@@ -442,35 +445,56 @@ function ClassesContent() {
         <p className="cl-empty">Занятия для этого возраста скоро появятся.</p>
       ) : (
         <ul className="cl-list">
-          {age.items.map((item) => (
-            <li key={item.id}>
-              <button
-                className="cl-item"
-                onClick={() => {
-                  setActivityId(item.id);
-                  setModalOpen(true);
-                }}
-              >
-                <span
-                  className={
-                    chosen && chosen.id === item.id ? "cl-dot on" : "cl-dot"
-                  }
-                />
-                {item.name}
-              </button>
-            </li>
-          ))}
+          {age.items.map((item) => {
+            const isBooked = !!booked[item.id];
+            return (
+              <li key={item.id} className="cl-card">
+                <button
+                  className="cl-card-name"
+                  onClick={() => setOpenItem(item)}
+                >
+                  {item.name} <span>{item.age || "..+"}</span>
+                </button>
+
+                <p className="cl-teacher">({item.teacher || "ФИО педагога"})</p>
+
+                <div className="cl-card-bottom">
+                  <span className="cl-card-price">
+                    {item.price || "... ₽ / занятие"}
+                  </span>
+                  <button
+                    className={isBooked ? "cl-action cancel" : "cl-action"}
+                    onClick={() => toggleBooking(item.id)}
+                  >
+                    {isBooked ? "Отменить" : "Записаться"}
+                  </button>
+                  <img className="cl-card-bottom" src={approveIcon} alt="Approved" />
+                </div>
+              </li>
+            );
+          })}
         </ul>
       )}
 
-      {modalOpen && chosen && (
-        <div className="cl-overlay" onClick={() => setModalOpen(false)}>
+      {openItem && (
+        <div className="cl-overlay" onClick={() => setOpenItem(null)}>
           <div className="cl-modal" onClick={(e) => e.stopPropagation()}>
-            <h3>{chosen.name}</h3>
+            <button
+              className="cl-close"
+              onClick={() => setOpenItem(null)}
+              aria-label="Закрыть"
+            >
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+                   stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M5 5l14 14M19 5L5 19" />
+              </svg>
+            </button>
 
-            {chosen.details.length > 0 ? (
+            <h3>{openItem.name}</h3>
+
+            {openItem.details.length > 0 ? (
               <ul className="cl-details">
-                {chosen.details.map((d) => (
+                {openItem.details.map((d) => (
                   <li key={d}>{d}</li>
                 ))}
               </ul>
@@ -480,11 +504,6 @@ function ClassesContent() {
               </p>
             )}
 
-            {chosen.price && <p className="cl-price">{chosen.price}</p>}
-
-            <button className="kg-btn kg-btn-primary" onClick={openChat}>
-              Записаться
-            </button>
             <button className="kg-btn kg-btn-secondary" onClick={openChat}>
               Задать вопрос
             </button>

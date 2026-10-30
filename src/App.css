@@ -107,7 +107,8 @@ button {
 .kg-format-title,
 .kg-note,
 .cl-modal h3,
-.event-name {
+.event-name,
+.cl-card-name {
   font-family: var(--font-text);
   font-size: var(--fs-sub);
   font-weight: 400;
@@ -127,7 +128,6 @@ body,
 .kg-paragraph,
 .kg-price,
 .kg-btn,
-.cl-item,
 .cl-details,
 .cl-details-empty,
 .cl-price,
@@ -147,8 +147,11 @@ body,
   color: var(--text-color);
 }
 
-/* Мелкая подпись (вкладки возрастов) */
-.cl-tab {
+/* Мелкая подпись (вкладки, педагог, цена и кнопки в карточках занятий) */
+.cl-tab,
+.cl-teacher,
+.cl-card-price,
+.cl-action {
   font-family: var(--font-text);
   font-size: var(--fs-small);
   letter-spacing: var(--ls-text);
@@ -692,10 +695,6 @@ body,
 
 /* ---------- Занятия ---------- */
 
-.cl-page {
-  min-height: 100%;
-}
-
 .cl-tabs {
   display: flex;
   gap: 2px;
@@ -725,34 +724,83 @@ body,
   background: #d4d4d4;
 }
 
-.cl-list {
-  margin: clamp(20px, 5dvh, 50px) 0 0;
-  padding: 0;
-  list-style: none;
+/* Страница занятий: заголовок и вкладки на месте, список карточек прокручивается */
+.cl-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
 }
 
-.cl-item {
-  display: flex;
-  align-items: center;
-  gap: 15px;
-  width: 100%;
-  padding: 7px 0;
+.cl-tabs {
+  flex-shrink: 0;
+}
+
+.cl-list {
+  flex: 1;
+  min-height: 0;
+  margin: 16px 0 0;
+  padding: 2px 2px 8px;
+  list-style: none;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.cl-list::-webkit-scrollbar {
+  display: none;
+}
+
+.cl-card {
+  margin-bottom: 14px;
+  padding: 12px 16px 14px;
+  border: 2px solid var(--dark-green);
+  border-radius: 24px;
+  background: var(--paper);
+  box-shadow: 0 2px 4px #00000020;
+}
+
+.cl-card-name {
+  display: block;
+  padding: 0;
   border: 0;
   background: transparent;
   text-align: left;
   cursor: pointer;
 }
 
-.cl-dot {
-  flex-shrink: 0;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #d9d9d9;
+.cl-card-name span {
+  margin-left: 6px;
 }
 
-.cl-dot.on {
-  background: var(--dark-green);
+.cl-teacher {
+  margin: 2px 0 8px;
+  justify-content: left;
+}
+
+.cl-card-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cl-action {
+  flex-shrink: 0;
+  min-width: 124px;
+  padding: 7px 14px;
+  border: 2px solid var(--light_orange);
+  border-radius: 20px;
+  background: var(--light_orange);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.cl-action.cancel {
+  background: var(--paper);
+}
+
+.cl-action:active {
+  transform: scale(0.97);
 }
 
 .cl-empty {
@@ -829,19 +877,19 @@ body,
 .lg-choices {
   display: flex;
   flex-direction: column;
-  gap: 35px;
+  gap: 20px;
   margin: clamp(24px, 6dvh, 50px) 0 0;
 }
 
 .lg-choice {
   width: 100%;
-  min-height: 120px;
   padding: 16px 12px;
   border: 0;
   border-radius: 28px;
   background: var(--beige);
   box-shadow: 0 2px 4px #00000025;
   cursor: pointer;
+  min-height: 120px;
   font-size: 28px;
 }
 

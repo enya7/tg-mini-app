@@ -136,6 +136,21 @@ function EventCard({ event }) {
   );
 }
 
+// Ссылка на Яндекс Карты. Можно заменить на ссылку на карточку организации
+// (яндекс.ру/maps/org/...), тогда откроется именно ваш центр.
+const MAP_URL =
+  "https://yandex.ru/maps/?text=" +
+  encodeURIComponent("Одинцово, Рябиновая улица, 5к1");
+
+// В Telegram внешние ссылки лучше открывать через его собственный метод
+function openExternal(e, url) {
+  const tg = window.Telegram?.WebApp;
+  if (tg?.openLink) {
+    e.preventDefault();
+    tg.openLink(url);
+  }
+}
+
 function EventsSection() {
   return (
     <section className="events-section">
@@ -154,13 +169,19 @@ function EventsSection() {
             <img src={phoneIcon} alt="" />
             <span>8 (993) 618-16-18</span>
           </a>
-          <div className="contact-row">
+          <a
+            className="contact-row"
+            href={MAP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => openExternal(e, MAP_URL)}
+          >
             <img src={mapPoint} alt="" />
             <span>
               Одинцово, ЖК “Одинцово-1”, ул.&nbsp;Рябиновая, д.5, к.1,
               подъезд 3, офис 138
             </span>
-          </div>
+          </a>
         </div>
       </Reveal>
     </section>
@@ -550,6 +571,17 @@ function SpecialistsContent() {
             className="cl-modal lg-modal"
             onClick={(e) => e.stopPropagation()}
           >
+            <button
+              className="cl-close"
+              onClick={() => setOpenId(null)}
+              aria-label="Закрыть"
+            >
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
+                   stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <path d="M5 5l14 14M19 5L5 19" />
+              </svg>
+            </button>
+
             <h3>{spec.title}</h3>
 
             <p className="lg-text">{spec.intro}</p>
@@ -609,7 +641,12 @@ function MainScreen() {
   return (
     <section className="main-screen">
 
-      <main className="content-area" key={activeSection}>
+      <main
+        className={
+          activeSection === "home" ? "content-area" : "content-area static"
+        }
+        key={activeSection}
+      >
         {activeSection === "home" && <HomeContent />}
         {activeSection === "kindergarten" && <KindergartenContent />}
         {activeSection === "classes" && <ClassesContent />}

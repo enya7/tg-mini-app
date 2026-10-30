@@ -596,7 +596,7 @@ body,
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
-  margin-top: clamp(24px, 8dvh, 72px);
+  margin-top: clamp(40px, 12dvh, 110px);
 }
 
 .kg-card {

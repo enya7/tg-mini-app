@@ -41,5 +41,8 @@ export function getSlotTimes(kind, refId, dateKey) {
   if (kind === "tour") return timesFor(TOUR, dateKey);
   if (kind === "nanny") return timesFor(NANNY, dateKey);
   if (kind === "specialist") return timesFor(SPECIALISTS[refId] || [], dateKey);
+  
+  // Добавляем заглушку времени для занятий (позже можете настроить конкретно под каждое)
+  if (kind === "class") return ["10:00", "11:00", "16:00", "17:00"]; 
   return [];
 }

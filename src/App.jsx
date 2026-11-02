@@ -17,6 +17,7 @@ import {
   checkBooking, checkCancel, makeBookingId, 
   addDays, toKey, formatShortDate, pruneState 
 } from "./bookingStore";
+import { getSlotTimes } from "./scheduleData";
 
 import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
@@ -27,6 +28,9 @@ const sections = [
   { id: "classes", icon: scheduleIcon, label: "Занятия" },
   { id: "doctors", icon: docIcon, label: "Логопед" },
 ];
+
+// Вставьте СЮДА скопированный URL из первого шага!
+const GOOGLE_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyVBsRo4u-_itQn-MTYk6IiZPBPhdw-JxK81EEhScS1gzKuiDO4vf_2Tq10Lq8ZrbHqAg/exec";
 
 const events = [
   {
@@ -224,6 +228,74 @@ function AuthModal({ onSave, onCancel }) {
   );
 }
 
+
+// =================================================================
+// Универсальное модальное окно выбора даты и времени
+// =================================================================
+function BookingModal({ params, onClose, onConfirm }) {
+  const [selectedDate, setSelectedDate] = useState(params.initialDate || toKey(new Date()));
+  const [selectedTime, setSelectedTime] = useState(null);
+
+  const dates = Array.from({ length: 14 }, (_, i) => {
+    const d = addDays(new Date(), i);
+    return { key: toKey(d), dayObj: d };
+  });
+  const DOW = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+
+  const times = getSlotTimes(params.kind, params.refId, selectedDate);
+
+  const handleConfirm = () => {
+    if (!selectedTime) return alert("Пожалуйста, выберите время");
+    onConfirm({
+      kind: params.kind,
+      refId: params.refId,
+      title: params.title,
+      date: selectedDate,
+      time: selectedTime
+    });
+  };
+
+  return (
+    <div className="cl-overlay" onClick={onClose}>
+      <div className="cl-modal" onClick={e => e.stopPropagation()}>
+        <button className="cl-close" onClick={onClose}>
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 5l14 14M19 5L5 19" /></svg>
+        </button>
+        <h3>Выберите время</h3>
+        <p className="kg-paragraph">{params.title}</p>
+        
+        <div className="calendar-strip" style={{marginTop: 0, paddingBottom: 0}}>
+          {dates.map(({ key, dayObj }) => (
+            <button 
+              key={key} 
+              className={`calendar-day ${selectedDate === key ? 'active' : ''}`} 
+              onClick={() => { setSelectedDate(key); setSelectedTime(null); }}
+            >
+              <span className="calendar-dow">{DOW[dayObj.getDay()]}</span>
+              <span className="calendar-date">{dayObj.getDate()}</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="time-slots">
+           {times.length === 0 ? <p className="cl-empty" style={{marginTop: "10px"}}>Нет свободного времени</p> : 
+             times.map(t => (
+               <button key={t} className={`time-slot ${selectedTime === t ? 'active' : ''}`} onClick={() => setSelectedTime(t)}>
+                 {t}
+               </button>
+             ))
+           }
+        </div>
+
+        <button className="kg-btn kg-btn-primary" onClick={handleConfirm} style={{marginTop: "20px"}}>
+          Продолжить
+        </button>
+      </div>
+    </div>
+  );
+}
+
+
 // =================================================================
 // 2. Главная страница (Вывод активных записей)
 // =================================================================
@@ -351,7 +423,7 @@ const formats = [
   },
 ];
 
-function KindergartenContent() {
+function KindergartenContent({ startBooking }) {
   const [formatId, setFormatId] = useState(null);
   const format = formats.find((f) => f.id === formatId);
 
@@ -363,27 +435,14 @@ function KindergartenContent() {
   if (!format) {
     return (
       <div className="kg-page">
-        <div className="page-heading">
-          <h1>Детский сад</h1>
-        </div>
+        <div className="page-heading"><h1>Детский сад</h1></div>
         <p className="kg-subtitle">Выберите удобный формат:</p>
-
         <div className="kg-grid">
           {formats.map((f) => (
-            <button
-              key={f.id}
-              className="kg-card"
-              onClick={() => setFormatId(f.id)}
-            >
-              {f.cardLines.map((line) => (
-                <span key={line}>{line}</span>
-              ))}
-              {f.id === "short" && (
-                <img className="kg-card-flower" src={flowerRight} alt="" />
-              )}
-              {f.id === "weekend" && (
-                <img className="kg-card-cherry" src={cherry} alt="" />
-              )}
+            <button key={f.id} className="kg-card" onClick={() => setFormatId(f.id)}>
+              {f.cardLines.map((line) => <span key={line}>{line}</span>)}
+              {f.id === "short" && <img className="kg-card-flower" src={flowerRight} alt="" />}
+              {f.id === "weekend" && <img className="kg-card-cherry" src={cherry} alt="" />}
             </button>
           ))}
         </div>
@@ -391,50 +450,33 @@ function KindergartenContent() {
     );
   }
 
-  // Экраны 2–5: подробности формата
   return (
     <div className="kg-page kg-detail">
-      <button
-        className="kg-back"
-        onClick={() => setFormatId(null)}
-        aria-label="Назад"
-      >
-        <svg viewBox="0 0 24 24" width="34" height="34" fill="none"
-             stroke="currentColor" strokeWidth="2" strokeLinecap="round"
-             strokeLinejoin="round">
-          <path d="M9 14L4 9l5-5" />
-          <path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" />
-        </svg>
+      <button className="kg-back" onClick={() => setFormatId(null)}>
+        <svg viewBox="0 0 24 24" width="34" height="34" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 14L4 9l5-5" /><path d="M4 9h10.5a5.5 5.5 0 0 1 0 11H11" /></svg>
       </button>
-
-      <div className="page-heading">
-        <h1>Выбор формата</h1>
-      </div>
+      <div className="page-heading"><h1>Выбор формата</h1></div>
       <h2 className="kg-format-title">{format.title}</h2>
-
       {format.lead && <p className="kg-lead">{format.lead}</p>}
-
-      <ul className="kg-list">
-        {format.list.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-
+      <ul className="kg-list">{format.list.map((item) => <li key={item}>{item}</li>)}</ul>
       {format.paragraph && <p className="kg-paragraph">{format.paragraph}</p>}
       {format.note && <p className="kg-note">{format.note}</p>}
       {format.price && <p className="kg-price">{format.price}</p>}
-
       <div className="kg-actions">
-        <button className="kg-btn kg-btn-primary" onClick={openChat}>
+        {/* Кнопка теперь открывает модалку бронирования вместо чата */}
+        <button className="kg-btn kg-btn-primary" onClick={() => {
+           const kind = format.id === "nanny" ? "nanny" : "tour";
+           const title = format.id === "nanny" ? "Няня на час" : `Экскурсия: ${format.title}`;
+           startBooking(kind, format.id, title);
+        }}>
           {format.cta}
         </button>
-        <button className="kg-btn kg-btn-secondary" onClick={openChat}>
-          Задать вопрос
-        </button>
+        <button className="kg-btn kg-btn-secondary" onClick={openChat}>Задать вопрос</button>
       </div>
     </div>
   );
 }
+
 
 /* Занятия */
 
@@ -474,93 +516,36 @@ const ageGroups = [
 // 3. Обновленные Занятия (Лента календаря и логика записи)
 // =================================================================
 
-function ClassesContent({ state, setState, profile, setProfile }) {
+function ClassesContent({ state, startBooking }) {
   const [ageId, setAgeId] = useState("4-5");
-  const [openItem, setOpenItem] = useState(null); // занятие, открытое в плашке
-  const [showAuth, setShowAuth] = useState(false);
-  const [pendingBooking, setPendingBooking] = useState(null);
-  
-  // Календарь: создаем 14 дней вперед начиная с сегодня
+  const [openItem, setOpenItem] = useState(null);
   const [selectedDate, setSelectedDate] = useState(toKey(new Date()));
+  
   const dates = Array.from({ length: 14 }, (_, i) => {
     const d = addDays(new Date(), i);
     return { key: toKey(d), dayObj: d };
   });
 
   const age = ageGroups.find((a) => a.id === ageId);
-  const DOW = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
-
-  // ссылка на вашего бота / администратора
-  const openChat = () =>
-    window.Telegram?.WebApp?.openTelegramLink("https://t.me/kiraen07");
-
-  const handleBookClick = (item) => {
-    // В реальном приложении здесь время берется из расписания, 
-    // пока ставим "10:00" для примера
-    const slot = {
-      kind: "class", 
-      refId: item.id, 
-      date: selectedDate, 
-      time: "10:00", 
-      title: `Занятие: ${item.name}`
-    };
-
-    if (!profile) {
-      setPendingBooking(slot);
-      setShowAuth(true);
-      return;
-    }
-    processBooking(slot);
-  };
-
-  const processBooking = (slot) => {
-    const error = checkBooking(state, slot);
-    if (error) return alert(error);
-    
-    slot.id = makeBookingId(slot);
-    setState(prev => ({ ...prev, list: [...prev.list, slot] }));
-    alert("Вы успешно записаны!");
-  };
-
-  const onAuthSave = (newProfile) => {
-    setProfile(newProfile);
-    setShowAuth(false);
-    if (pendingBooking) {
-      processBooking(pendingBooking);
-      setPendingBooking(null);
-    }
-  };
+  const DOW = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+  const openChat = () => window.Telegram?.WebApp?.openTelegramLink("https://t.me/kiraen07");
 
   return (
     <div className="cl-page">
-      {/* Окно авторизации перед первой записью */}
-      {showAuth && <AuthModal onSave={onAuthSave} onCancel={() => setShowAuth(false)} />}
-      
-      <div className="page-heading">
-        <h1>Занятия для детей</h1>
-      </div>
+      <div className="page-heading"><h1>Занятия для детей</h1></div>
       <p className="cl-subtitle">Выберите удобный формат:</p>
 
       <div className="cl-tabs">
         {ageGroups.map((a) => (
-          <button
-            key={a.id}
-            className={a.id === ageId ? "cl-tab active" : "cl-tab"}
-            onClick={() => setAgeId(a.id)}
-          >
+          <button key={a.id} className={a.id === ageId ? "cl-tab active" : "cl-tab"} onClick={() => setAgeId(a.id)}>
             {a.label}
           </button>
         ))}
       </div>
 
-      {/* Горизонтальный календарь */}
       <div className="calendar-strip">
         {dates.map(({ key, dayObj }) => (
-          <button 
-            key={key} 
-            className={`calendar-day ${selectedDate === key ? 'active' : ''}`} 
-            onClick={() => setSelectedDate(key)}
-          >
+          <button key={key} className={`calendar-day ${selectedDate === key ? 'active' : ''}`} onClick={() => setSelectedDate(key)}>
             <span className="calendar-dow">{DOW[dayObj.getDay()]}</span>
             <span className="calendar-date">{dayObj.getDate()}</span>
           </button>
@@ -572,39 +557,20 @@ function ClassesContent({ state, setState, profile, setProfile }) {
       ) : (
         <ul className="cl-list">
           {age.items.map((item) => {
-            // Проверяем, есть ли уже запись на этот предмет в выбранный день
             const isBooked = state.list.some(b => b.kind === "class" && b.refId === item.id && b.date === selectedDate);
-            
             return (
               <li key={item.id} className="cl-card">
-                {isBooked && (
-                  <img className="cl-booked-icon" src={approveIcon} alt="Записан" />
-                )}
-                <button
-                  className="cl-card-name"
-                  onClick={() => setOpenItem(item)}
-                >
+                {isBooked && <img className="cl-booked-icon" src={approveIcon} alt="Записан" />}
+                <button className="cl-card-name" onClick={() => setOpenItem(item)}>
                   {item.name} <span>{item.age || "..+"}</span>
                 </button>
-
-                <p className="cl-teacher">10:00 ({item.teacher || "ФИО педагога"})</p>
-
+                <p className="cl-teacher">({item.teacher || "ФИО педагога"})</p>
                 <div className="cl-card-bottom">
-                  <span className="cl-card-price">
-                    {item.price || "... ₽ / занятие"}
-                  </span>
+                  <span className="cl-card-price">{item.price || "... ₽"}</span>
                   {isBooked ? (
-                     <button 
-                       className="cl-action cancel" 
-                       onClick={() => alert("Для отмены перейдите в раздел Главная -> Расписание")}
-                     >
-                       Уже записаны
-                     </button>
+                     <button className="cl-action cancel" onClick={() => alert("Для отмены перейдите в раздел Главная -> Расписание")}>Уже записаны</button>
                   ) : (
-                     <button 
-                       className="cl-action" 
-                       onClick={() => handleBookClick(item)}
-                     >
+                     <button className="cl-action" onClick={() => startBooking("class", item.id, `Занятие: ${item.name}`, selectedDate)}>
                        Записаться
                      </button>
                   )}
@@ -615,38 +581,17 @@ function ClassesContent({ state, setState, profile, setProfile }) {
         </ul>
       )}
 
-      {/* Модальное окно с подробностями о занятии */}
       {openItem && (
         <div className="cl-overlay" onClick={() => setOpenItem(null)}>
           <div className="cl-modal" onClick={(e) => e.stopPropagation()}>
-            <button
-              className="cl-close"
-              onClick={() => setOpenItem(null)}
-              aria-label="Закрыть"
-            >
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-                   stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M5 5l14 14M19 5L5 19" />
-              </svg>
+            <button className="cl-close" onClick={() => setOpenItem(null)}>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 5l14 14M19 5L5 19" /></svg>
             </button>
-
             <h3>{openItem.name}</h3>
-
             {openItem.details.length > 0 ? (
-              <ul className="cl-details">
-                {openItem.details.map((d) => (
-                  <li key={d}>{d}</li>
-                ))}
-              </ul>
-            ) : (
-              <p className="cl-details-empty">
-                Подробности уточняйте у администратора.
-              </p>
-            )}
-
-            <button className="kg-btn kg-btn-secondary" onClick={openChat}>
-              Задать вопрос
-            </button>
+              <ul className="cl-details">{openItem.details.map((d) => <li key={d}>{d}</li>)}</ul>
+            ) : <p className="cl-details-empty">Подробности уточняйте у администратора.</p>}
+            <button className="kg-btn kg-btn-secondary" onClick={openChat}>Задать вопрос</button>
           </div>
         </div>
       )}
@@ -697,74 +642,45 @@ const specialists = [
   },
 ];
 
-function SpecialistsContent() {
+function SpecialistsContent({ startBooking }) {
   const [openId, setOpenId] = useState(null);
   const spec = specialists.find((s) => s.id === openId);
-
-  // замените ссылку на вашего бота / администратора
-  const openChat = () =>
-    window.Telegram?.WebApp?.openTelegramLink("https://t.me/kiraen07");
+  const openChat = () => window.Telegram?.WebApp?.openTelegramLink("https://t.me/kiraen07");
 
   return (
     <div className="lg-page">
-      <div className="page-heading">
-        <h1>Логопед/нейропсихолог</h1>
-      </div>
+      <div className="page-heading"><h1>Логопед/нейропсихолог</h1></div>
       <p className="lg-subtitle">Выберите удобный формат:</p>
-
       <div className="lg-choices">
         {specialists.map((s) => (
-          <button
-            key={s.id}
-            className="lg-choice"
-            onClick={() => setOpenId(s.id)}
-          >
-            {s.button}
-          </button>
+          <button key={s.id} className="lg-choice" onClick={() => setOpenId(s.id)}>{s.button}</button>
         ))}
       </div>
 
       {spec && (
         <div className="cl-overlay" onClick={() => setOpenId(null)}>
-          <div
-            className="cl-modal lg-modal"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="cl-close"
-              onClick={() => setOpenId(null)}
-              aria-label="Закрыть"
-            >
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="none"
-                   stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                <path d="M5 5l14 14M19 5L5 19" />
-              </svg>
+          <div className="cl-modal lg-modal" onClick={(e) => e.stopPropagation()}>
+            <button className="cl-close" onClick={() => setOpenId(null)}>
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 5l14 14M19 5L5 19" /></svg>
             </button>
-
             <h3>{spec.title}</h3>
-
             <p className="lg-text">{spec.intro}</p>
-
-            {spec.bullets.length > 0 && (
-              <ul className="lg-bullets">
-                {spec.bullets.map((b) => (
-                  <li key={b}>{b}</li>
-                ))}
-              </ul>
-            )}
-
+            {spec.bullets.length > 0 && <ul className="lg-bullets">{spec.bullets.map((b) => <li key={b}>{b}</li>)}</ul>}
             {spec.outro && <p className="lg-text">{spec.outro}</p>}
-
+            
             <div className="lg-modal-actions">
               {spec.actions.map((a) => (
                 <button
                   key={a.label}
-                  className={
-                    a.kind === "primary"
-                      ? "kg-btn kg-btn-primary"
-                      : "kg-btn kg-btn-secondary"
-                  }
-                  onClick={openChat}
+                  className={a.kind === "primary" ? "kg-btn kg-btn-primary" : "kg-btn kg-btn-secondary"}
+                  onClick={() => {
+                    if (a.kind === "primary" && spec.id !== "unknown") {
+                       // Кнопка записывает через универсальный компонент
+                       startBooking("specialist", spec.id, `Прием: ${spec.title}`);
+                    } else {
+                       openChat();
+                    }
+                  }}
                 >
                   {a.label}
                 </button>
@@ -777,51 +693,94 @@ function SpecialistsContent() {
   );
 }
 
-/* Заглушка для разделов, которые пока не реализованы */
-
-function PlaceholderContent({ section }) {
-  const titles = {
-    classes: "Занятия",
-  };
-
-  return (
-    <div className="placeholder-content">
-      <h1>{titles[section] || "Раздел"}</h1>
-      <p>Здесь скоро появится информация.</p>
-    </div>
-  );
-}
-
 /* Главный экран с навигацией по разделам */
 
 function MainScreen({ state, setState, profile, setProfile }) {
   const [activeSection, setActiveSection] = useState("home");
+  
+  // Состояния для универсального бронирования
+  const [bookingParams, setBookingParams] = useState(null); 
+  const [showAuth, setShowAuth] = useState(false);
+  const [pendingSlot, setPendingSlot] = useState(null); 
+
+  // Вызывается из любого раздела, открывает модалку с датой/временем
+  const startBooking = (kind, refId, title, initialDate = null) => {
+    setBookingParams({ kind, refId, title, initialDate });
+  };
+
+  // Вызывается, когда пользователь выбрал дату и время
+  const handleTimeSelected = (slot) => {
+    setBookingParams(null);
+    if (!profile) {
+      setPendingSlot(slot);
+      setShowAuth(true); // Запрашиваем номер, если его еще нет
+    } else {
+      finalizeBooking(slot, profile);
+    }
+  };
+
+  const handleAuthSave = (newProfile) => {
+    setProfile(newProfile);
+    setShowAuth(false);
+    if (pendingSlot) {
+      finalizeBooking(pendingSlot, newProfile);
+      setPendingSlot(null);
+    }
+  };
+
+  const finalizeBooking = (slot, userProfile) => {
+    const error = checkBooking(state, slot);
+    if (error) return alert(error);
+
+    slot.id = makeBookingId(slot);
+
+    // Отправка данных в Google Таблицу (обновленный метод)
+    if (GOOGLE_WEBHOOK_URL && GOOGLE_WEBHOOK_URL.startsWith("http")) {
+      
+      // Формируем данные как URL-параметры (x-www-form-urlencoded)
+      const formData = new URLSearchParams();
+      formData.append('name', userProfile.name);
+      formData.append('phone', userProfile.phone);
+      formData.append('title', slot.title);
+      formData.append('date', formatShortDate(slot.date));
+      formData.append('time', slot.time);
+
+      fetch(GOOGLE_WEBHOOK_URL, {
+        method: "POST",
+        mode: "no-cors",
+        // Используем стандартный заголовок для форм
+        headers: { "Content-Type": "application/x-www-form-urlencoded" },
+        // Отправляем строку параметров
+        body: formData.toString()
+      }).catch(err => console.error("Ошибка отправки", err));
+    }
+
+    setState(prev => ({ ...prev, list: [...prev.list, slot] }));
+    alert("Вы успешно записаны! Запись добавлена в ваше расписание на главном экране.");
+    setActiveSection("home"); // Перебрасываем на главную, чтобы показать расписание
+  };
+
   return (
     <section className="main-screen">
+      {/* Универсальные модалки (поверх всех экранов) */}
+      {bookingParams && <BookingModal params={bookingParams} onClose={() => setBookingParams(null)} onConfirm={handleTimeSelected} />}
+      {showAuth && <AuthModal onSave={handleAuthSave} onCancel={() => setShowAuth(false)} />}
+
       <main className={activeSection === "home" ? "content-area" : "content-area static"} key={activeSection}>
         {activeSection === "home" && <HomeContent state={state} setState={setState} />}
-        {activeSection === "kindergarten" && <KindergartenContent />}
-        {activeSection === "classes" && <ClassesContent state={state} setState={setState} profile={profile} setProfile={setProfile} />}
-        {activeSection === "doctors" && <SpecialistsContent />}
+        {activeSection === "kindergarten" && <KindergartenContent startBooking={startBooking} />}
+        {activeSection === "classes" && <ClassesContent state={state} startBooking={startBooking} />}
+        {activeSection === "doctors" && <SpecialistsContent startBooking={startBooking} />}
       </main>
-
+      
       <nav className="bottom-navigation">
         {sections.map((section) => (
           <button
             key={section.id}
-            className={
-              activeSection === section.id ? "nav-item active" : "nav-item"
-            }
+            className={activeSection === section.id ? "nav-item active" : "nav-item"}
             onClick={() => setActiveSection(section.id)}
-            aria-label={section.label}
-            aria-current={
-              activeSection === section.id ? "page" : undefined
-            }
           >
-            <span
-              className="nav-icon"
-              style={{ "--icon": `url("${section.icon}")` }}
-            />
+            <span className="nav-icon" style={{ "--icon": `url("${section.icon}")` }} />
           </button>
         ))}
       </nav>

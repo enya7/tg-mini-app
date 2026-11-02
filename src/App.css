@@ -997,3 +997,113 @@ body,
     min-height: 110px;
   }
 }
+
+
+/* =====================================================
+   НОВЫЕ ЭЛЕМЕНТЫ: КАЛЕНДАРЬ, ЗАПИСИ, АВТОРИЗАЦИЯ
+   ===================================================== */
+
+/* Лента календаря (Занятия) */
+.calendar-strip {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px 0 16px;
+  margin-top: 10px;
+  scrollbar-width: none;
+}
+.calendar-strip::-webkit-scrollbar { display: none; }
+
+.calendar-day {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 52px;
+  padding: 8px;
+  border-radius: 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-color);
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+.calendar-day.active {
+  background: var(--dark-green);
+  color: var(--paper);
+}
+.calendar-dow {
+  font-size: 14px;
+  margin-bottom: 6px;
+  opacity: 0.8;
+}
+.calendar-date {
+  font-size: 18px;
+  font-weight: bold;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+}
+.calendar-day.active .calendar-date {
+  background: var(--sage);
+  color: var(--dark-green);
+}
+
+/* Карточки записей (Главная) */
+.booking-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-top: 16px;
+  width: 100%;
+}
+.booking-card {
+  background: var(--beige);
+  border-radius: 24px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 2px 4px #00000015;
+  text-align: left;
+}
+.booking-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  font-size: 16px;
+}
+.booking-header img { width: 22px; height: 22px; }
+.booking-title { font-size: 16px; margin: 4px 0 12px; }
+.booking-actions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.booking-cancel {
+  background: var(--paper);
+  border: 1px solid var(--light_orange);
+  color: var(--text-color);
+  padding: 8px 20px;
+  border-radius: 20px;
+  font-size: 15px;
+  cursor: pointer;
+}
+.booking-approved { width: 32px; height: 32px; }
+
+/* Авторизация */
+.auth-input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 2px solid var(--sage);
+  border-radius: 16px;
+  margin-bottom: 12px;
+  font-family: var(--font-text);
+  font-size: 16px;
+  color: var(--text-color);
+  outline: none;
+  background: var(--paper);
+}

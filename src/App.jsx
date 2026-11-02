@@ -12,6 +12,11 @@ import halloweenImg from "./assets/Halloween.svg";
 import phoneIcon from "./assets/Phone.svg";
 import mapPoint from "./assets/Map_point.svg"; 
 import approveIcon from "./assets/approve.svg"; 
+import { 
+  loadState, saveState, loadProfile, saveProfile, 
+  checkBooking, checkCancel, makeBookingId, 
+  addDays, toKey, formatShortDate, pruneState 
+} from "./bookingStore";
 
 import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
@@ -189,7 +194,53 @@ function EventsSection() {
   );
 }
 
-function HomeContent() {
+
+// =================================================================
+// 1. Компонент авторизации (запрашивает данные перед первой записью)
+// =================================================================
+function AuthModal({ onSave, onCancel }) {
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+
+  const handleSave = () => {
+    if (name.trim().length < 2) return alert("Введите ваше имя");
+    if (phone.replace(/\D/g, "").length < 10) return alert("Введите корректный номер телефона");
+    onSave({ name: name.trim(), phone: phone.trim() });
+  };
+
+  return (
+    <div className="cl-overlay">
+      <div className="cl-modal" onClick={e => e.stopPropagation()}>
+        <h3>Давайте познакомимся</h3>
+        <p className="kg-paragraph">Чтобы сохранить запись, укажите ваши данные для связи (один раз).</p>
+        <input className="auth-input" placeholder="Имя и фамилия" value={name} onChange={e => setName(e.target.value)} />
+        <input className="auth-input" placeholder="Телефон (+7...)" type="tel" value={phone} onChange={e => setPhone(e.target.value)} />
+        <div className="kg-actions">
+          <button className="kg-btn kg-btn-primary" onClick={handleSave}>Сохранить и записаться</button>
+          <button className="kg-btn kg-btn-secondary" onClick={onCancel}>Отмена</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =================================================================
+// 2. Главная страница (Вывод активных записей)
+// =================================================================
+
+function HomeContent({ state, setState }) {
+  const handleCancel = (booking) => {
+    const error = checkCancel(booking);
+    if (error) return alert(error);
+    if (!window.confirm(`Точно отменить запись на "${booking.title}"?`)) return;
+    
+    const newState = {
+      ...state,
+      list: state.list.filter(b => b.id !== booking.id),
+      cancels: [...state.cancels, Date.now()]
+    };
+    setState(newState);
+  };
   return (
     <>
       <div className="page-heading">
@@ -213,14 +264,25 @@ function HomeContent() {
         </p>
       </div>
 
-      <div className="schedule-heading">
-        <h2>Расписание</h2>
-        <img className="leaf-decoration" src={mainFlower} alt=''></img>
-      </div>
-
-      <div className="schedule-card">
-        <p>Вашего расписания пока нет</p>
-      </div>
+      {state.list.length === 0 ? (
+        <div className="schedule-card"><p>Вашего расписания пока нет</p></div>
+      ) : (
+        <div className="booking-list">
+          {state.list.map(b => (
+            <div key={b.id} className="booking-card">
+              <div className="booking-header">
+                <img src={scheduleIcon} alt="" />
+                {formatShortDate(b.date)} {b.time}
+              </div>
+              <p className="booking-title">{b.title}</p>
+              <div className="booking-actions">
+                <img className="booking-approved" src={approveIcon} alt="Подтверждено" />
+                <button className="booking-cancel" onClick={() => handleCancel(b)}>Отменить</button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       <EventsSection />
     </>
@@ -408,22 +470,72 @@ const ageGroups = [
   { id: "6+", label: "6+", items: [] },
 ];
 
-function ClassesContent() {
+// =================================================================
+// 3. Обновленные Занятия (Лента календаря и логика записи)
+// =================================================================
+
+function ClassesContent({ state, setState, profile, setProfile }) {
   const [ageId, setAgeId] = useState("4-5");
   const [openItem, setOpenItem] = useState(null); // занятие, открытое в плашке
-  const [booked, setBooked] = useState({});       // { chess: true, ... }
+  const [showAuth, setShowAuth] = useState(false);
+  const [pendingBooking, setPendingBooking] = useState(null);
+  
+  // Календарь: создаем 14 дней вперед начиная с сегодня
+  const [selectedDate, setSelectedDate] = useState(toKey(new Date()));
+  const dates = Array.from({ length: 14 }, (_, i) => {
+    const d = addDays(new Date(), i);
+    return { key: toKey(d), dayObj: d };
+  });
 
   const age = ageGroups.find((a) => a.id === ageId);
+  const DOW = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
 
-  // замените ссылку на вашего бота / администратора
+  // ссылка на вашего бота / администратора
   const openChat = () =>
     window.Telegram?.WebApp?.openTelegramLink("https://t.me/kiraen07");
 
-  const toggleBooking = (id) =>
-    setBooked((prev) => ({ ...prev, [id]: !prev[id] }));
+  const handleBookClick = (item) => {
+    // В реальном приложении здесь время берется из расписания, 
+    // пока ставим "10:00" для примера
+    const slot = {
+      kind: "class", 
+      refId: item.id, 
+      date: selectedDate, 
+      time: "10:00", 
+      title: `Занятие: ${item.name}`
+    };
+
+    if (!profile) {
+      setPendingBooking(slot);
+      setShowAuth(true);
+      return;
+    }
+    processBooking(slot);
+  };
+
+  const processBooking = (slot) => {
+    const error = checkBooking(state, slot);
+    if (error) return alert(error);
+    
+    slot.id = makeBookingId(slot);
+    setState(prev => ({ ...prev, list: [...prev.list, slot] }));
+    alert("Вы успешно записаны!");
+  };
+
+  const onAuthSave = (newProfile) => {
+    setProfile(newProfile);
+    setShowAuth(false);
+    if (pendingBooking) {
+      processBooking(pendingBooking);
+      setPendingBooking(null);
+    }
+  };
 
   return (
     <div className="cl-page">
+      {/* Окно авторизации перед первой записью */}
+      {showAuth && <AuthModal onSave={onAuthSave} onCancel={() => setShowAuth(false)} />}
+      
       <div className="page-heading">
         <h1>Занятия для детей</h1>
       </div>
@@ -441,12 +553,28 @@ function ClassesContent() {
         ))}
       </div>
 
+      {/* Горизонтальный календарь */}
+      <div className="calendar-strip">
+        {dates.map(({ key, dayObj }) => (
+          <button 
+            key={key} 
+            className={`calendar-day ${selectedDate === key ? 'active' : ''}`} 
+            onClick={() => setSelectedDate(key)}
+          >
+            <span className="calendar-dow">{DOW[dayObj.getDay()]}</span>
+            <span className="calendar-date">{dayObj.getDate()}</span>
+          </button>
+        ))}
+      </div>
+
       {age.items.length === 0 ? (
         <p className="cl-empty">Занятия для этого возраста скоро появятся.</p>
       ) : (
         <ul className="cl-list">
           {age.items.map((item) => {
-            const isBooked = !!booked[item.id];
+            // Проверяем, есть ли уже запись на этот предмет в выбранный день
+            const isBooked = state.list.some(b => b.kind === "class" && b.refId === item.id && b.date === selectedDate);
+            
             return (
               <li key={item.id} className="cl-card">
                 {isBooked && (
@@ -459,18 +587,27 @@ function ClassesContent() {
                   {item.name} <span>{item.age || "..+"}</span>
                 </button>
 
-                <p className="cl-teacher">({item.teacher || "ФИО педагога"})</p>
+                <p className="cl-teacher">10:00 ({item.teacher || "ФИО педагога"})</p>
 
                 <div className="cl-card-bottom">
                   <span className="cl-card-price">
                     {item.price || "... ₽ / занятие"}
                   </span>
-                  <button
-                    className={isBooked ? "cl-action cancel" : "cl-action"}
-                    onClick={() => toggleBooking(item.id)}
-                  >
-                    {isBooked ? "Отменить" : "Записаться"}
-                  </button>
+                  {isBooked ? (
+                     <button 
+                       className="cl-action cancel" 
+                       onClick={() => alert("Для отмены перейдите в раздел Главная -> Расписание")}
+                     >
+                       Уже записаны
+                     </button>
+                  ) : (
+                     <button 
+                       className="cl-action" 
+                       onClick={() => handleBookClick(item)}
+                     >
+                       Записаться
+                     </button>
+                  )}
                 </div>
               </li>
             );
@@ -478,6 +615,7 @@ function ClassesContent() {
         </ul>
       )}
 
+      {/* Модальное окно с подробностями о занятии */}
       {openItem && (
         <div className="cl-overlay" onClick={() => setOpenItem(null)}>
           <div className="cl-modal" onClick={(e) => e.stopPropagation()}>
@@ -656,25 +794,15 @@ function PlaceholderContent({ section }) {
 
 /* Главный экран с навигацией по разделам */
 
-function MainScreen() {
+function MainScreen({ state, setState, profile, setProfile }) {
   const [activeSection, setActiveSection] = useState("home");
-
   return (
     <section className="main-screen">
-
-      <main
-        className={
-          activeSection === "home" ? "content-area" : "content-area static"
-        }
-        key={activeSection}
-      >
-        {activeSection === "home" && <HomeContent />}
+      <main className={activeSection === "home" ? "content-area" : "content-area static"} key={activeSection}>
+        {activeSection === "home" && <HomeContent state={state} setState={setState} />}
         {activeSection === "kindergarten" && <KindergartenContent />}
-        {activeSection === "classes" && <ClassesContent />}
+        {activeSection === "classes" && <ClassesContent state={state} setState={setState} profile={profile} setProfile={setProfile} />}
         {activeSection === "doctors" && <SpecialistsContent />}
-        {!["home", "kindergarten", "classes", "doctors"].includes(activeSection) && (
-          <PlaceholderContent section={activeSection} />
-        )}
       </main>
 
       <nav className="bottom-navigation">
@@ -701,10 +829,19 @@ function MainScreen() {
   );
 }
 
+
 export default function App() {
   const [screen, setScreen] = useState("splash");
+  
+  // Добавляем хранилище записей и профиля
+  const [state, setState] = useState({ list: [], cancels: [] });
+  const [profile, setProfile] = useState(null);
 
+  // Загружаем данные при старте и запускаем таймеры
   useEffect(() => {
+    loadState().then(s => setState(pruneState(s)));
+    loadProfile().then(p => setProfile(p));
+
     const welcomeTimer = setTimeout(() => {
       setScreen("welcome");
     }, 2200);
@@ -719,12 +856,23 @@ export default function App() {
     };
   }, []);
 
+  // Автоматически сохраняем данные при любом их изменении
+  useEffect(() => { saveState(state); }, [state]);
+  useEffect(() => { if (profile) saveProfile(profile); }, [profile]);
+
   return (
     <div className="app-wrapper">
       <div className="screen-container">
         {screen === "splash" && <SplashScreen />}
         {screen === "welcome" && <WelcomeScreen />}
-        {screen === "home" && <MainScreen />}
+        {screen === "home" && (
+          <MainScreen 
+            state={state} 
+            setState={setState} 
+            profile={profile} 
+            setProfile={setProfile} 
+          />
+        )}
       </div>
     </div>
   );

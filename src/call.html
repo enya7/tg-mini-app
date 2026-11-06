@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Позвонить в «Матрёшку»</title>
+  <style>
+    body { margin: 0; min-height: 100vh; display: flex; flex-direction: column;
+           align-items: center; justify-content: center; gap: 18px; padding: 24px;
+           font-family: system-ui, sans-serif; color: #174046; text-align: center; }
+    h1 { margin: 0; font-size: 26px; }
+    p { margin: 0; font-size: 20px; }
+    a.call { display: inline-block; padding: 16px 36px; border-radius: 30px;
+             background: #ffb883; color: #174046; font-size: 22px;
+             text-decoration: none; box-shadow: 0 3px 5px #00000030; }
+  </style>
+</head>
+<body>
+  <h1>Центр детского развития «Матрёшка»</h1>
+  <p>+7 (993) 618-16-18</p>
+  <a class="call" href="tel:+79936181618">Позвонить</a>
+  <script>
+    // На телефоне сразу предлагает набрать номер. Если не сработало, есть кнопка.
+    setTimeout(function () { window.location.href = "tel:+79936181618"; }, 300);
+  </script>
+</body>
+</html>

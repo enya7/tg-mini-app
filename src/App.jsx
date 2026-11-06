@@ -30,7 +30,57 @@ const sections = [
 ];
 
 // Вставьте СЮДА скопированный URL из первого шага!
-const GOOGLE_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyVBsRo4u-_itQn-MTYk6IiZPBPhdw-JxK81EEhScS1gzKuiDO4vf_2Tq10Lq8ZrbHqAg/exec";
+const GOOGLE_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx4tZ0wWkYqJ91Z_ezNvXpWPcbfi4sQ9zTdSmCleYDuaMbr7qu3yikhYkqOk-rZqCNU/exec";
+
+// ---------- Telegram и ссылки ----------
+const tgApp = () => window.Telegram?.WebApp;
+const inTelegram = () => !!tgApp()?.initData;
+const tgUserId = () => tgApp()?.initDataUnsafe?.user?.id || "";
+
+// Полный адрес файла из папки public (работает и на GitHub Pages, и локально)
+const absUrl = (path) =>
+  new URL(import.meta.env.BASE_URL + path, window.location.origin).href;
+
+// В Telegram ссылки tel: не открываются. Вместо этого открываем в браузере
+// страницу call.html с кнопкой «Позвонить». Вне Telegram работает обычный tel:.
+function callAdmin(e) {
+  if (inTelegram() && tgApp().openLink) {
+    e.preventDefault();
+    tgApp().openLink(absUrl("call.html"));
+  }
+}
+
+// Политика конфиденциальности (файл public/privacy.html)
+function openPrivacy(e) {
+  e.preventDefault();
+  const url = absUrl("privacy.html");
+  if (inTelegram() && tgApp().openLink) tgApp().openLink(url);
+  else window.open(url, "_blank", "noopener");
+}
+
+// Отправка события в Google Таблицу: action = "book" или "cancel"
+function sendToSheet(action, booking, profile) {
+  if (!GOOGLE_WEBHOOK_URL || !GOOGLE_WEBHOOK_URL.startsWith("http")) return;
+
+  const p = new URLSearchParams();
+  p.append("action", action);
+  p.append("id", booking.id);
+  p.append("name", profile?.name || "");
+  p.append("phone", profile?.phone || "");
+  p.append("title", booking.title);
+  p.append("date", booking.date); // 2026-11-06
+  p.append("time", booking.time); // 10:30
+  p.append("tg_id", String(tgUserId()));
+  p.append("consent", profile?.consentAt || "");
+
+  fetch(GOOGLE_WEBHOOK_URL, {
+    method: "POST",
+    mode: "no-cors",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: p.toString(),
+  }).catch((err) => console.error("Ошибка отправки", err));
+}
+
 
 const events = [
   {
@@ -175,7 +225,7 @@ function EventsSection() {
 
       <Reveal>
         <div className="events-contacts">
-          <a className="contact-row" href="tel:+79936181618">
+          <a className="contact-row" href="tel:+79936181618" onClick={callAdmin}>
             <img src={phoneIcon} alt="" />
             <span>8 (993) 618-16-18</span>
           </a>
@@ -205,23 +255,78 @@ function EventsSection() {
 function AuthModal({ onSave, onCancel }) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
+  const [agreed, setAgreed] = useState(false);
+  const [error, setError] = useState("");
 
   const handleSave = () => {
-    if (name.trim().length < 2) return alert("Введите ваше имя");
-    if (phone.replace(/\D/g, "").length < 10) return alert("Введите корректный номер телефона");
-    onSave({ name: name.trim(), phone: phone.trim() });
+    const digits = phone.replace(/\D/g, "");
+    if (name.trim().length < 2) return setError("Введите ваше имя");
+    if (digits.length < 10 || digits.length > 15)
+      return setError("Введите корректный номер телефона");
+    if (!agreed) return setError("Нужно согласиться с политикой конфиденциальности");
+
+    // Просим у Telegram разрешение писать пользователю (для напоминаний в чате)
+    try {
+      tgApp()?.requestWriteAccess?.();
+    } catch {
+      /* старые версии Telegram */
+    }
+
+    onSave({
+      name: name.trim(),
+      phone: phone.trim(),
+      consentAt: new Date().toISOString(), // когда дано согласие
+    });
   };
 
   return (
     <div className="cl-overlay">
-      <div className="cl-modal" onClick={e => e.stopPropagation()}>
+      <div className="cl-modal" onClick={(e) => e.stopPropagation()}>
         <h3>Давайте познакомимся</h3>
-        <p className="kg-paragraph">Чтобы сохранить запись, укажите ваши данные для связи (один раз).</p>
-        <input className="auth-input" placeholder="Имя и фамилия" value={name} onChange={e => setName(e.target.value)} />
-        <input className="auth-input" placeholder="Телефон (+7...)" type="tel" value={phone} onChange={e => setPhone(e.target.value)} />
+        <p className="kg-paragraph">
+          Чтобы сохранить запись, укажите ваши данные для связи (один раз).
+        </p>
+        <input
+          className="auth-input"
+          placeholder="Имя и фамилия"
+          value={name}
+          onChange={(e) => { setName(e.target.value); setError(""); }}
+        />
+        <input
+          className="auth-input"
+          placeholder="Телефон (+7...)"
+          type="tel"
+          value={phone}
+          onChange={(e) => { setPhone(e.target.value); setError(""); }}
+        />
+
+        <label className="auth-consent">
+          <input
+            type="checkbox"
+            checked={agreed}
+            onChange={(e) => { setAgreed(e.target.checked); setError(""); }}
+          />
+          <span>
+            Я согласен(на) на обработку персональных данных и принимаю{" "}
+            <a href={absUrl("privacy.html")} onClick={openPrivacy}>
+              политику конфиденциальности
+            </a>
+          </span>
+        </label>
+
+        {error && <p className="auth-error">{error}</p>}
+
         <div className="kg-actions">
-          <button className="kg-btn kg-btn-primary" onClick={handleSave}>Сохранить и записаться</button>
-          <button className="kg-btn kg-btn-secondary" onClick={onCancel}>Отмена</button>
+          <button
+            className="kg-btn kg-btn-primary"
+            onClick={handleSave}
+            disabled={!agreed}
+          >
+            Сохранить и записаться
+          </button>
+          <button className="kg-btn kg-btn-secondary" onClick={onCancel}>
+            Отмена
+          </button>
         </div>
       </div>
     </div>
@@ -300,7 +405,7 @@ function BookingModal({ params, onClose, onConfirm }) {
 // 2. Главная страница (Вывод активных записей)
 // =================================================================
 
-function HomeContent({ state, setState }) {
+function HomeContent({ state, setState, profile }) {
   const handleCancel = (booking) => {
     const error = checkCancel(booking);
     if (error) return alert(error);
@@ -312,6 +417,7 @@ function HomeContent({ state, setState }) {
       cancels: [...state.cancels, Date.now()]
     };
     setState(newState);
+    sendToSheet("cancel", booking, profile);
   };
   return (
     <>
@@ -323,16 +429,24 @@ function HomeContent({ state, setState }) {
         <p>
           Адрес:
           <br />
-          Рябиновая ул., 5, корп. 1,
-          <br />
-          этаж 1, офис 138
-          <br />
-          Одинцово
+          <a
+            className="info-address"
+            href={MAP_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={(e) => openExternal(e, MAP_URL)}
+          >
+            Рябиновая ул., 5, корп. 1,
+            <br />
+            этаж 1, офис 138
+            <br />
+            Одинцово
+          </a>
         </p>
 
         <p className="phone">
           Телефон:{" "}
-          <a href="tel:+79936181618">+7 (993) 618-16-18</a>
+          <a href="tel:+79936181618" onClick={callAdmin}>+7 (993) 618-16-18</a>
         </p>
       </div>
 
@@ -734,26 +848,7 @@ function MainScreen({ state, setState, profile, setProfile }) {
 
     slot.id = makeBookingId(slot);
 
-    // Отправка данных в Google Таблицу (обновленный метод)
-    if (GOOGLE_WEBHOOK_URL && GOOGLE_WEBHOOK_URL.startsWith("http")) {
-      
-      // Формируем данные как URL-параметры (x-www-form-urlencoded)
-      const formData = new URLSearchParams();
-      formData.append('name', userProfile.name);
-      formData.append('phone', userProfile.phone);
-      formData.append('title', slot.title);
-      formData.append('date', formatShortDate(slot.date));
-      formData.append('time', slot.time);
-
-      fetch(GOOGLE_WEBHOOK_URL, {
-        method: "POST",
-        mode: "no-cors",
-        // Используем стандартный заголовок для форм
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        // Отправляем строку параметров
-        body: formData.toString()
-      }).catch(err => console.error("Ошибка отправки", err));
-    }
+    sendToSheet("book", slot, userProfile);
 
     setState(prev => ({ ...prev, list: [...prev.list, slot] }));
     alert("Вы успешно записаны! Запись добавлена в ваше расписание на главном экране.");
@@ -767,7 +862,7 @@ function MainScreen({ state, setState, profile, setProfile }) {
       {showAuth && <AuthModal onSave={handleAuthSave} onCancel={() => setShowAuth(false)} />}
 
       <main className={activeSection === "home" ? "content-area" : "content-area static"} key={activeSection}>
-        {activeSection === "home" && <HomeContent state={state} setState={setState} />}
+        {activeSection === "home" && <HomeContent state={state} setState={setState} profile={profile} />}
         {activeSection === "kindergarten" && <KindergartenContent startBooking={startBooking} />}
         {activeSection === "classes" && <ClassesContent state={state} startBooking={startBooking} />}
         {activeSection === "doctors" && <SpecialistsContent startBooking={startBooking} />}

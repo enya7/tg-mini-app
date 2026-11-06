@@ -1131,3 +1131,50 @@ body,
   background: var(--sage);
   color: var(--paper);
 }
+/* ---------- Согласие с политикой и ссылки ---------- */
+.auth-consent {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  margin: 4px 0 0;
+  font-family: var(--font-text);
+  font-size: var(--fs-small);
+  line-height: var(--lh-text);
+  color: var(--text-color);
+  text-align: left;
+  cursor: pointer;
+}
+
+.auth-consent input {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin: 1px 0 0;
+  accent-color: var(--dark-green);
+}
+
+.auth-consent a {
+  color: inherit;
+  text-decoration: underline;
+}
+
+.auth-error {
+  margin: 0;
+  font-size: var(--fs-small);
+  color: #b5523b;
+  text-align: left;
+}
+
+.kg-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+/* Адрес в «Информации» нажимается и открывает карту */
+.information-card a.info-address {
+  white-space: normal;
+  text-decoration: underline;
+  text-decoration-style: dotted;
+  text-underline-offset: 4px;
+}

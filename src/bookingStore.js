@@ -53,7 +53,7 @@ export const endTime = (time) => {
   return `${pad(h + SLOT_HOURS)}:${pad(m)}`;
 };
 
-const SHORT_DOW = ["пн", "вт", "ср", "чт", "пт", "сб", "вс"];
+const SHORT_DOW = ["вс", "пн", "вт", "ср", "чт", "пт", "сб"]; // getDay(): 0 = воскресенье
 
 // «ср 04.11»
 export const formatShortDate = (key) => {

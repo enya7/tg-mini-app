@@ -53,7 +53,7 @@ function callAdmin(e) {
 // Политика конфиденциальности (файл public/privacy.html)
 function openPrivacy(e) {
   e.preventDefault();
-  const url = absUrl("privacy.html");
+  const url = absUrl("https://www.fa.ru/privacy-policy/");
   if (inTelegram() && tgApp().openLink) tgApp().openLink(url);
   else window.open(url, "_blank", "noopener");
 }

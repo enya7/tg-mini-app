@@ -1178,3 +1178,70 @@ body,
   text-decoration-style: dotted;
   text-underline-offset: 4px;
 }
+
+
+/* ===== Добавьте в КОНЕЦ App.css ===== */
+
+/* Круглая кнопка «Записаться на экскурсию» на главной */
+.tour-btn {
+  display: block;
+  width: 100%;
+  margin: 16px 0 24px;
+  margin-bottom: 24px;
+  padding: 16px 20px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--peach);
+  box-shadow: 0 3px 4px #00000030;
+  color: var(--text-color);
+  font-family: var(--font-text);
+  font-size: var(--fs-body);
+  font-weight: 700;
+  cursor: pointer;
+}
+.tour-btn:active { transform: scale(0.98); }
+
+/* Окно записи прокручивается, если няней много */
+.cl-modal {
+  max-height: 90%;
+  overflow-y: auto;
+}
+
+/* Занятое время */
+.time-slot:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  text-decoration: line-through;
+}
+
+/* Список нянь */
+.nanny-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 16px;
+}
+.nanny-card {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  padding: 12px 16px;
+  border: 2px solid var(--sage);
+  border-radius: 16px;
+  background: var(--paper);
+  color: var(--text-color);
+  font-family: var(--font-text);
+  text-align: left;
+  cursor: pointer;
+}
+.nanny-card.active {
+  background: var(--sage);
+  color: var(--paper);
+}
+.nanny-card:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+.nanny-name { font-size: 17px; font-weight: 700; }
+.nanny-exp  { font-size: 15px; }

@@ -15,9 +15,10 @@ import approveIcon from "./assets/approve.svg";
 import { 
   loadState, saveState, loadProfile, saveProfile, 
   checkBooking, checkCancel, makeBookingId, 
-  addDays, toKey, formatShortDate, pruneState 
+  addDays, toKey, formatShortDate, pruneState,
+  slotStart, weekdayOf, MIN_LEAD_HOURS
 } from "./bookingStore";
-import { getSlotTimes } from "./scheduleData";
+import { getSlotTimes, getNanniesAt, DAY_VISITS } from "./scheduleData";
 
 import React, { useEffect, useRef, useState } from "react";
 import "./App.css";
@@ -30,16 +31,21 @@ const sections = [
 ];
 
 // Вставьте СЮДА скопированный URL из первого шага!
-const GOOGLE_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbx4tZ0wWkYqJ91Z_ezNvXpWPcbfi4sQ9zTdSmCleYDuaMbr7qu3yikhYkqOk-rZqCNU/exec";
+const GOOGLE_WEBHOOK_URL = "https://script.google.com/macros/s/AKfycbyi8aXPDtPje2UTndyqWbqVAxnP5SdLdgG9J9N-WfA6smJjedQp0I2JYsymbVPXCuylLA/exec";
 
 // ---------- Telegram и ссылки ----------
 const tgApp = () => window.Telegram?.WebApp;
 const inTelegram = () => !!tgApp()?.initData;
 const tgUserId = () => tgApp()?.initDataUnsafe?.user?.id || "";
+const tgUsername = () => {
+  const u = tgApp()?.initDataUnsafe?.user;
+  return u?.username ? "@" + u.username : "";
+};
 
 // Полный адрес файла из папки public (работает и на GitHub Pages, и локально)
 const absUrl = (path) =>
   new URL(import.meta.env.BASE_URL + path, window.location.origin).href;
+
 
 // В Telegram ссылки tel: не открываются. Вместо этого открываем в браузере
 // страницу call.html с кнопкой «Позвонить». Вне Telegram работает обычный tel:.
@@ -51,17 +57,20 @@ function callAdmin(e) {
 }
 
 // Политика конфиденциальности (файл public/privacy.html)
+const PRIVACY_URL = "https://www.fa.ru/privacy-policy/"; // замените на свою политику
 function openPrivacy(e) {
   e.preventDefault();
-  const url = absUrl("https://www.fa.ru/privacy-policy/");
+  const url = PRIVACY_URL;
   if (inTelegram() && tgApp().openLink) tgApp().openLink(url);
   else window.open(url, "_blank", "noopener");
 }
 
-// Отправка события в Google Таблицу: action = "book" или "cancel"
-function sendToSheet(action, booking, profile) {
-  if (!GOOGLE_WEBHOOK_URL || !GOOGLE_WEBHOOK_URL.startsWith("http")) return;
-
+// Отправка события в Google Таблицу: action = "book" или "cancel".
+// Возвращает ответ таблицы: { status: "success" | "busy" } или { status: "network" }
+async function sendToSheet(action, booking, profile) {
+  if (!GOOGLE_WEBHOOK_URL || !GOOGLE_WEBHOOK_URL.startsWith("http")) {
+    return { status: "success" };
+  }
   const p = new URLSearchParams();
   p.append("action", action);
   p.append("id", booking.id);
@@ -70,17 +79,36 @@ function sendToSheet(action, booking, profile) {
   p.append("title", booking.title);
   p.append("date", booking.date); // 2026-11-06
   p.append("time", booking.time); // 10:30
+  p.append("all_day", booking.allDay ? "1" : "");
   p.append("tg_id", String(tgUserId()));
+  p.append("tg_username", tgUsername());
   p.append("consent", profile?.consentAt || "");
 
-  fetch(GOOGLE_WEBHOOK_URL, {
-    method: "POST",
-    mode: "no-cors",
-    headers: { "Content-Type": "application/x-www-form-urlencoded" },
-    body: p.toString(),
-  }).catch((err) => console.error("Ошибка отправки", err));
+  try {
+    const res = await fetch(GOOGLE_WEBHOOK_URL, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: p.toString(),
+    });
+    return await res.json();
+  } catch (err) {
+    console.error("Ошибка отправки", err);
+    return { status: "network" };
+  }
 }
 
+// Какие няни уже заняты другими людьми (список ID записей из таблицы)
+async function fetchBusyIds() {
+  if (!GOOGLE_WEBHOOK_URL || !GOOGLE_WEBHOOK_URL.startsWith("http")) return [];
+  try {
+    const res = await fetch(GOOGLE_WEBHOOK_URL + "?action=busy");
+    const data = await res.json();
+    return Array.isArray(data.busy) ? data.busy : [];
+  } catch (err) {
+    console.error("Не удалось получить занятость", err);
+    return [];
+  }
+}
 
 const events = [
   {
@@ -308,7 +336,7 @@ function AuthModal({ onSave, onCancel }) {
           />
           <span>
             Я согласен(на) на обработку персональных данных и принимаю{" "}
-            <a href={absUrl("privacy.html")} onClick={openPrivacy}>
+            <a href={PRIVACY_URL} onClick={openPrivacy}>
               политику конфиденциальности
             </a>
           </span>
@@ -335,64 +363,164 @@ function AuthModal({ onSave, onCancel }) {
 
 
 // =================================================================
-// Универсальное модальное окно выбора даты и времени
+// Универсальное модальное окно записи.
+// mode "time"  : дата + время (экскурсия, занятия, специалисты)
+// mode "day"   : только день (сад: полный день, кратковременного, выходного дня)
+// mode "nanny" : дата + время + выбор няни (занятые няни недоступны)
 // =================================================================
-function BookingModal({ params, onClose, onConfirm }) {
-  const [selectedDate, setSelectedDate] = useState(params.initialDate || toKey(new Date()));
-  const [selectedTime, setSelectedTime] = useState(null);
+const DOW = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
 
-  const dates = Array.from({ length: 14 }, (_, i) => {
+function BookingModal({ params, onClose, onConfirm }) {
+  const mode = params.mode || "time";
+  const now = new Date();
+  const minMs = MIN_LEAD_HOURS * 3600 * 1000;
+
+  const allDates = Array.from({ length: 21 }, (_, i) => {
     const d = addDays(new Date(), i);
     return { key: toKey(d), dayObj: d };
   });
-  const DOW = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
+  const dates =
+    mode === "day"
+      ? allDates.filter(
+          ({ key, dayObj }) =>
+            params.days.includes(weekdayOf(dayObj)) &&
+            slotStart(key, params.start) - now >= minMs
+        )
+      : allDates;
 
-  const times = getSlotTimes(params.kind, params.refId, selectedDate);
+  const [selectedDate, setSelectedDate] = useState(
+    params.initialDate || (mode === "day" ? dates[0]?.key : toKey(new Date())) || null
+  );
+  const [selectedTime, setSelectedTime] = useState(null);
+  const [selectedNanny, setSelectedNanny] = useState(null);
+  const [busy, setBusy] = useState(mode === "nanny" ? null : []); // null = загружаем
+
+  useEffect(() => {
+    if (mode === "nanny") fetchBusyIds().then(setBusy);
+  }, [mode]);
+
+  // Время, которое ещё можно выбрать (с учётом «не позднее чем за N часов»)
+  const times =
+    mode === "day" || !selectedDate
+      ? []
+      : getSlotTimes(params.kind, params.refId, selectedDate).filter(
+          (t) => slotStart(selectedDate, t) - now >= minMs
+        );
+
+  const isNannyBusy = (n, time) =>
+    (busy || []).includes(
+      makeBookingId({ kind: "nanny", refId: n.id, date: selectedDate, time })
+    );
+  const freeNannies = (time) =>
+    getNanniesAt(selectedDate, time).filter((n) => !isNannyBusy(n, time));
 
   const handleConfirm = () => {
+    if (mode === "day") {
+      if (!selectedDate) return alert("Пожалуйста, выберите день");
+      return onConfirm({
+        kind: params.kind,
+        refId: params.refId,
+        title: params.title,
+        date: selectedDate,
+        time: params.start,
+        allDay: true,
+      });
+    }
     if (!selectedTime) return alert("Пожалуйста, выберите время");
+    if (mode === "nanny") {
+      if (!selectedNanny) return alert("Пожалуйста, выберите няню");
+      return onConfirm({
+        kind: "nanny",
+        refId: selectedNanny.id,
+        title: `Няня: ${selectedNanny.name}`,
+        date: selectedDate,
+        time: selectedTime,
+      });
+    }
     onConfirm({
       kind: params.kind,
       refId: params.refId,
       title: params.title,
       date: selectedDate,
-      time: selectedTime
+      time: selectedTime,
     });
   };
 
+  const heading =
+    mode === "day" ? "Выберите день" : mode === "nanny" ? "Выберите время и няню" : "Выберите время";
+
   return (
     <div className="cl-overlay" onClick={onClose}>
-      <div className="cl-modal" onClick={e => e.stopPropagation()}>
+      <div className="cl-modal" onClick={(e) => e.stopPropagation()}>
         <button className="cl-close" onClick={onClose}>
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round"><path d="M5 5l14 14M19 5L5 19" /></svg>
         </button>
-        <h3>Выберите время</h3>
+        <h3>{heading}</h3>
         <p className="kg-paragraph">{params.title}</p>
-        
-        <div className="calendar-strip" style={{marginTop: 0, paddingBottom: 0}}>
-          {dates.map(({ key, dayObj }) => (
-            <button 
-              key={key} 
-              className={`calendar-day ${selectedDate === key ? 'active' : ''}`} 
-              onClick={() => { setSelectedDate(key); setSelectedTime(null); }}
-            >
-              <span className="calendar-dow">{DOW[dayObj.getDay()]}</span>
-              <span className="calendar-date">{dayObj.getDate()}</span>
-            </button>
-          ))}
-        </div>
 
-        <div className="time-slots">
-           {times.length === 0 ? <p className="cl-empty" style={{marginTop: "10px"}}>Нет свободного времени</p> : 
-             times.map(t => (
-               <button key={t} className={`time-slot ${selectedTime === t ? 'active' : ''}`} onClick={() => setSelectedTime(t)}>
-                 {t}
-               </button>
-             ))
-           }
-        </div>
+        {dates.length === 0 ? (
+          <p className="cl-empty">Нет доступных дней. Позвоните администратору.</p>
+        ) : (
+          <div className="calendar-strip" style={{ marginTop: 0, paddingBottom: 0 }}>
+            {dates.map(({ key, dayObj }) => (
+              <button
+                key={key}
+                className={`calendar-day ${selectedDate === key ? "active" : ""}`}
+                onClick={() => { setSelectedDate(key); setSelectedTime(null); setSelectedNanny(null); }}
+              >
+                <span className="calendar-dow">{DOW[dayObj.getDay()]}</span>
+                <span className="calendar-date">{dayObj.getDate()}</span>
+              </button>
+            ))}
+          </div>
+        )}
 
-        <button className="kg-btn kg-btn-primary" onClick={handleConfirm} style={{marginTop: "20px"}}>
+        {mode !== "day" && (
+          <div className="time-slots">
+            {busy === null ? (
+              <p className="cl-empty" style={{ marginTop: "10px" }}>Загружаем свободное время…</p>
+            ) : times.length === 0 ? (
+              <p className="cl-empty" style={{ marginTop: "10px" }}>Нет свободного времени</p>
+            ) : (
+              times.map((t) => {
+                const full = mode === "nanny" && freeNannies(t).length === 0;
+                return (
+                  <button
+                    key={t}
+                    disabled={full}
+                    className={`time-slot ${selectedTime === t ? "active" : ""}`}
+                    onClick={() => { setSelectedTime(t); setSelectedNanny(null); }}
+                  >
+                    {t}
+                  </button>
+                );
+              })
+            )}
+          </div>
+        )}
+
+        {mode === "nanny" && selectedTime && (
+          <div className="nanny-list">
+            {getNanniesAt(selectedDate, selectedTime).map((n) => {
+              const taken = isNannyBusy(n, selectedTime);
+              return (
+                <button
+                  key={n.id}
+                  disabled={taken}
+                  className={`nanny-card ${selectedNanny?.id === n.id ? "active" : ""}`}
+                  onClick={() => setSelectedNanny(n)}
+                >
+                  <span className="nanny-name">{n.name}</span>
+                  <span className="nanny-exp">
+                    Стаж: {n.experience}{taken ? " · занята на это время" : ""}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
+        <button className="kg-btn kg-btn-primary" onClick={handleConfirm} style={{ marginTop: "20px" }}>
           Продолжить
         </button>
       </div>
@@ -405,7 +533,7 @@ function BookingModal({ params, onClose, onConfirm }) {
 // 2. Главная страница (Вывод активных записей)
 // =================================================================
 
-function HomeContent({ state, setState, profile }) {
+function HomeContent({ state, setState, profile, startBooking }) {
   const handleCancel = (booking) => {
     const error = checkCancel(booking);
     if (error) return alert(error);
@@ -450,6 +578,13 @@ function HomeContent({ state, setState, profile }) {
         </p>
       </div>
 
+      <button
+        className="tour-btn"
+        onClick={() => startBooking("tour", "garden", "Экскурсия по саду")}
+      >
+        Записаться на экскурсию
+      </button>
+
       {state.list.length === 0 ? (
         <div className="schedule-card"><p>Вашего расписания пока нет</p></div>
       ) : (
@@ -458,7 +593,7 @@ function HomeContent({ state, setState, profile }) {
             <div key={b.id} className="booking-card">
               <div className="booking-header">
                 <img src={scheduleIcon} alt="" />
-                {formatShortDate(b.date)} {b.time}
+                {formatShortDate(b.date)}{b.allDay ? "" : ` ${b.time}`}
               </div>
               <p className="booking-title">{b.title}</p>
               <div className="booking-actions">
@@ -484,7 +619,7 @@ const formats = [
     title: "Полный день 8:00-19:00",
     lead: "Детский сад полного дня · 2+",
     list: [
-      "8:00–19:00",
+      "Пн–Пт, 8:00–19:00",
       "4-разовое питание",
       "Небольшая группа",
       "Развивающие занятия в течение дня",
@@ -500,7 +635,7 @@ const formats = [
     title: "Группа кратковременного пребывания 8:00-12:00",
     lead: "Группа кратковременного пребывания · 2+",
     list: [
-      "8:00–12:00",
+      "Пн–Пт, 8:00–12:00",
       "Мягкая адаптация к саду",
       "Игры и занятия",
       "Питание по желанию",
@@ -515,7 +650,7 @@ const formats = [
     title: "Сад выходного дня",
     lead: "Сад выходного дня · 2+",
     list: [
-      "Суббота",
+      "Суббота и воскресенье",
       "10:00 - 14:00",
       "Игры, занятия и присмотр",
       "На территории «Матрёшки»",
@@ -532,7 +667,7 @@ const formats = [
       "Подходит, когда родителям нужно освободить несколько часов",
     ],
     paragraph:
-      "Укажите удобные дату и время – администратор подтвердит возможность записи",
+      "Выберите день, время и няню – свободные няни показаны сразу",
     cta: "Забронировать время",
   },
 ];
@@ -579,9 +714,13 @@ function KindergartenContent({ startBooking }) {
       <div className="kg-actions">
         {/* Кнопка теперь открывает модалку бронирования вместо чата */}
         <button className="kg-btn kg-btn-primary" onClick={() => {
-           const kind = format.id === "nanny" ? "nanny" : "tour";
-           const title = format.id === "nanny" ? "Няня на час" : `Экскурсия: ${format.title}`;
-           startBooking(kind, format.id, title);
+           if (format.id === "nanny") {
+             startBooking("nanny", "nanny", "Няня на час", null, { mode: "nanny" });
+           } else {
+             // сад: выбираем только день (дни и начало в scheduleData.js → DAY_VISITS)
+             startBooking("tour", format.id, `Экскурсия: ${format.title}`, null,
+               { mode: "day", ...DAY_VISITS[format.id] });
+           }
         }}>
           {format.cta}
         </button>
@@ -641,7 +780,6 @@ function ClassesContent({ state, startBooking }) {
   });
 
   const age = ageGroups.find((a) => a.id === ageId);
-  const DOW = ["Вс", "Пн", "Вт", "Ср", "Чт", "Пт", "Сб"];
   const openChat = () => window.Telegram?.WebApp?.openTelegramLink("https://t.me/kiraen07");
 
   return (
@@ -818,8 +956,10 @@ function MainScreen({ state, setState, profile, setProfile }) {
   const [pendingSlot, setPendingSlot] = useState(null); 
 
   // Вызывается из любого раздела, открывает модалку с датой/временем
-  const startBooking = (kind, refId, title, initialDate = null) => {
-    setBookingParams({ kind, refId, title, initialDate });
+  const [saving, setSaving] = useState(false);
+
+  const startBooking = (kind, refId, title, initialDate = null, extra = {}) => {
+    setBookingParams({ kind, refId, title, initialDate, ...extra });
   };
 
   // Вызывается, когда пользователь выбрал дату и время
@@ -842,13 +982,24 @@ function MainScreen({ state, setState, profile, setProfile }) {
     }
   };
 
-  const finalizeBooking = (slot, userProfile) => {
+  const finalizeBooking = async (slot, userProfile) => {
     const error = checkBooking(state, slot);
     if (error) return alert(error);
 
     slot.id = makeBookingId(slot);
 
-    sendToSheet("book", slot, userProfile);
+    setSaving(true);
+    const res = await sendToSheet("book", slot, userProfile);
+    setSaving(false);
+
+    // Няню могли забронировать за секунды до нас
+    if (res.status === "busy") {
+      return alert("Эту няню на выбранное время уже забронировали. Выберите другую няню или другое время.");
+    }
+    // Няню без подтверждения таблицы не бронируем, иначе возможны двойные записи
+    if (slot.kind === "nanny" && res.status !== "success") {
+      return alert("Не удалось подтвердить бронь. Проверьте интернет и попробуйте ещё раз.");
+    }
 
     setState(prev => ({ ...prev, list: [...prev.list, slot] }));
     alert("Вы успешно записаны! Запись добавлена в ваше расписание на главном экране.");
@@ -859,10 +1010,11 @@ function MainScreen({ state, setState, profile, setProfile }) {
     <section className="main-screen">
       {/* Универсальные модалки (поверх всех экранов) */}
       {bookingParams && <BookingModal params={bookingParams} onClose={() => setBookingParams(null)} onConfirm={handleTimeSelected} />}
+      {saving && <div className="cl-overlay"><div className="cl-modal"><p>Записываем…</p></div></div>}
       {showAuth && <AuthModal onSave={handleAuthSave} onCancel={() => setShowAuth(false)} />}
 
       <main className={activeSection === "home" ? "content-area" : "content-area static"} key={activeSection}>
-        {activeSection === "home" && <HomeContent state={state} setState={setState} profile={profile} />}
+        {activeSection === "home" && <HomeContent state={state} setState={setState} profile={profile} startBooking={startBooking} />}
         {activeSection === "kindergarten" && <KindergartenContent startBooking={startBooking} />}
         {activeSection === "classes" && <ClassesContent state={state} startBooking={startBooking} />}
         {activeSection === "doctors" && <SpecialistsContent startBooking={startBooking} />}
@@ -884,8 +1036,22 @@ function MainScreen({ state, setState, profile, setProfile }) {
 }
 
 
+// Все картинки грузим заранее, пока идёт заставка, чтобы иконки не появлялись с задержкой
+const ALL_IMAGES = [
+  flowerLeft, flowerRight, logo, cherry, bear, scheduleIcon, homeIcon, docIcon,
+  gardenIcon, mainFlower, halloweenImg, phoneIcon, mapPoint, approveIcon,
+];
+
 export default function App() {
   const [screen, setScreen] = useState("splash");
+
+  useEffect(() => {
+    ALL_IMAGES.forEach((src) => {
+      const img = new Image();
+      img.src = src;
+      img.decode?.().catch(() => {});
+    });
+  }, []);
   
   // Добавляем хранилище записей и профиля
   const [state, setState] = useState({ list: [], cancels: [] });
